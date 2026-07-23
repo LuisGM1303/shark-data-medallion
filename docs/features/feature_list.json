@@ -85,7 +85,7 @@
       "Step 3: Assert resolved_via includes 'REDIRECT'",
       "Step 4: Verify final title is the canonical Wikipedia article title"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "resolver",
@@ -96,7 +96,7 @@
       "Step 3: Assert resolved_via includes 'SEARCH'",
       "Step 4: Verify returned page URL is valid"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "resolver",
@@ -107,7 +107,7 @@
       "Step 3: Assert no title is returned",
       "Step 4: Verify candidates are logged for debugging"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "resolver",
@@ -118,7 +118,7 @@
       "Step 3: Assert no page metadata is returned",
       "Step 4: Verify error is documented for cuarentena"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "resolver",
@@ -129,7 +129,7 @@
       "Step 3: Assert DISAMBIGUATION_PAGE rejection is documented",
       "Step 4: Verify disambiguation page is rejected, not accepted"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",

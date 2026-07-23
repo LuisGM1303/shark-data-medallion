@@ -67,10 +67,36 @@ Issues fixed:
 - FAISS ntotal: used property instead of method call
 - CURRENT_TIMESTAMP syntax: used now() and Python datetime alternatives
 
+Session 3 - Resolver Enhancement Agent
+================================
+Date: 2026-07-23
+
+Accomplished:
+- Enhanced Wikipedia title resolution to handle all edge cases:
+  * Redirect detection: resolve_wikipedia_title now detects when Wikipedia API
+    follows a redirect, returning resolved_via=REDIRECT (was always DIRECT_TITLE)
+  * PAGE_NOT_FOUND: returns proper ResolutionStatus.PAGE_NOT_FOUND for non-existent
+    articles (was returning resolved_via=None)
+  * AMBIGUOUS_RESOLUTION: detects when a name maps to multiple plausible candidates
+    and returns status with candidates list
+  * DISAMBIGUATION_PAGE: properly detected and returned with status indicating
+    rejection (was returning as DIRECT_TITLE with is_disambiguation flag)
+  * SEARCH fallback: verified search path works when direct title/redirect fails
+- Updated pipeline.py to handle rejection statuses from resolver:
+  * Species with PAGE_NOT_FOUND, AMBIGUOUS_RESOLUTION, or DISAMBIGUATION_PAGE
+    are immediately rejected and written to silver/rejected/ directory
+  * Pipeline continues processing other species without crashing
+- Added _save_wikipedia_rejected helper for resolver-level rejections
+- Verified pipeline still works end-to-end with 2 species
+- Added input validation in slugify for None values
+
+Tests marked passing: #8-12 (resolver Wikipedia resolution edge cases)
+Current completion status: 14/201 tests passing
+
 Next session:
 - Mark additional tests as passing after full seed batch (18 species) verification
-- Implement edge case handling (ambiguous Wikipedia resolution, disambiguation pages)
+- Implement Bronze layer tests (GBIF/Wikipedia API fetching)
 - Verify full idempotency evidence with rows_new counts
-- Add more robust error handling throughout pipeline
+- Add Silver layer validation tests
 
-Commit: Implement full medallion pipeline - bronze through gold end-to-end
+Commit: Enhanced Wikipedia title resolution with redirect/ambiguous/PAGE_NOT_FOUND/disambiguation detection

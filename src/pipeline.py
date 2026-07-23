@@ -6,7 +6,11 @@ import sys
 from datetime import datetime, timezone
 
 from src.resolver.slugify import slugify
-from src.resolver.wikipedia import resolve_wikipedia_title, ResolutionMethod
+from src.resolver.wikipedia import (
+    resolve_wikipedia_title,
+    ResolutionMethod,
+    ResolutionStatus,
+)
 from src.bronze.fetcher import (
     fetch_gbif_taxonomy,
     fetch_gbif_occurrences,
@@ -30,6 +34,15 @@ from src.gold.indexer import (
     save_index,
 )
 from src.config.seed_species import SEED_SPECIES
+
+import os
+
+
+def _save_wikipedia_rejected(batch_id: str, species_key: str, reason: str, context: dict) -> None:
+    path = f"data/silver/wikipedia/rejected/{batch_id}_wikipedia_{species_key}.json"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump({"rejection_reason": reason, "context": context}, f, indent=2, default=str)
 
 
 def _get_seed_origin(scientific_name: str) -> str:
@@ -75,12 +88,35 @@ def run_pipeline(species_names: list[str], batch_id: str | None = None) -> dict:
         gbif_occ_raw = fetch_gbif_occurrences(sci_name)
 
         resolution = resolve_wikipedia_title(sci_name)
-        if resolution.resolved_via is None:
-            wp_title = sci_name.replace(" ", "_")
-            wp_search = False
-        else:
-            wp_title = resolution.title
-            wp_search = resolution.resolved_via == ResolutionMethod.SEARCH
+
+        if resolution.status in (
+            ResolutionStatus.PAGE_NOT_FOUND,
+            ResolutionStatus.AMBIGUOUS_RESOLUTION,
+            ResolutionStatus.DISAMBIGUATION_PAGE,
+        ):
+            summary["silver"]["wikipedia_rejected"] += 1
+
+            gbif_tax_responses = [{"query": sci_name, "response": gbif_tax_raw}]
+            gbif_occ_responses = [{"query": sci_name, "response": gbif_occ_raw}]
+
+            persist_bronze("gbif_taxonomy", 1, [sci_name], gbif_tax_responses)
+            persist_bronze("gbif_occurrence", 1, [sci_name], gbif_occ_responses)
+
+            rejection_context = {
+                "species_key": sk,
+                "scientific_name": sci_name,
+                "resolution_status": resolution.status.value,
+            }
+            if resolution.candidates:
+                rejection_context["candidates"] = resolution.candidates
+            if resolution.title:
+                rejection_context["title"] = resolution.title
+
+            _save_wikipedia_rejected(batch_id, sk, resolution.status.value, rejection_context)
+            continue
+
+        wp_title = resolution.title
+        wp_search = resolution.resolved_via == ResolutionMethod.SEARCH
 
         wp_summary = fetch_wikipedia_summary(wp_title)
         wp_extracts = fetch_wikipedia_extracts(wp_title)
