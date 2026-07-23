@@ -1,0 +1,21 @@
+services:
+  pipeline:
+    build: .
+    command: python -m src.pipeline --batch seed
+    environment:
+      - BATCH_SPECIES=
+    volumes:
+      - ./data:/app/data
+    profiles:
+      - pipeline
+
+  notebook:
+    build: .
+    command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src
+    profiles:
+      - notebook

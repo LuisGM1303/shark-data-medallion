@@ -1,0 +1,2213 @@
+[
+  {
+    "category": "config",
+    "description": "seed_species.py exists and defines exactly 18 seed species",
+    "steps": [
+      "Step 1: Import seed_species from config module",
+      "Step 2: Verify SEED_SPECIES is a list",
+      "Step 3: Assert len(SEED_SPECIES) == 18",
+      "Step 4: Verify all entries have species_key, scientific_name, wikipedia_title"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Each seed species entry has valid species_key format (slugified scientific name)",
+    "steps": [
+      "Step 1: For each species in SEED_SPECIES, check species_key is lowercase",
+      "Step 2: Verify underscores replace spaces in species_key",
+      "Step 3: Verify species_key matches slugify(scientific_name)",
+      "Step 4: Verify no special characters in species_key"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Each seed species has valid scientific_name (binomial format)",
+    "steps": [
+      "Step 1: Verify each scientific_name contains exactly two words (genus + species)",
+      "Step 2: Verify genus is capitalized",
+      "Step 3: Verify species epithet is lowercase",
+      "Step 4: Verify no trailing/leading whitespace"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Each seed species has a valid Wikipedia title",
+    "steps": [
+      "Step 1: For each species, assert wikipedia_title is a non-empty string",
+      "Step 2: Verify wikipedia_title does not contain underscores (uses spaces)",
+      "Step 3: Verify title is in English",
+      "Step 4: Verify title matches Wikipedia page naming convention"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "pyproject.toml specifies Python >=3.11",
+    "steps": [
+      "Step 1: Read pyproject.toml",
+      "Step 2: Find requires-python field",
+      "Step 3: Verify requires-python specifies >=3.11",
+      "Step 4: Verify Python version in environment meets requirement"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "slugify function converts scientific names to species_key deterministically",
+    "steps": [
+      "Step 1: Import slugify function",
+      "Step 2: Call slugify('Carcharodon carcharias')",
+      "Step 3: Assert result is 'carcharodon_carcharias'",
+      "Step 4: Verify output is lowercase with underscores"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "slugify handles multi-word scientific names correctly",
+    "steps": [
+      "Step 1: Call slugify('Carcharodon carcharias')",
+      "Step 2: Assert result is 'carcharodon_carcharias'",
+      "Step 3: Verify no extra characters or spaces remain",
+      "Step 4: Verify all 18 seed species keys are producible via slugify"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia title resolution follows redirects to final article title",
+    "steps": [
+      "Step 1: Call Wikipedia resolve function with a known redirect title",
+      "Step 2: Verify function follows redirect",
+      "Step 3: Assert resolved_via includes 'REDIRECT'",
+      "Step 4: Verify final title is the canonical Wikipedia article title"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia title resolution uses search when direct title doesn't match",
+    "steps": [
+      "Step 1: Call resolve function with scientific name (not Wikipedia title)",
+      "Step 2: Verify function searches Wikipedia API",
+      "Step 3: Assert resolved_via includes 'SEARCH'",
+      "Step 4: Verify returned page URL is valid"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia resolution detects ambiguous results and sets AMBIGUOUS_RESOLUTION",
+    "steps": [
+      "Step 1: Call resolve function with a name that maps to multiple candidates",
+      "Step 2: Verify function returns rejection with AMBIGUOUS_RESOLUTION",
+      "Step 3: Assert no title is returned",
+      "Step 4: Verify candidates are logged for debugging"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia resolution returns PAGE_NOT_FOUND when no article exists",
+    "steps": [
+      "Step 1: Call resolve function with nonexistent title",
+      "Step 2: Verify function returns rejection with PAGE_NOT_FOUND",
+      "Step 3: Assert no page metadata is returned",
+      "Step 4: Verify error is documented for cuarentena"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia resolution detects disambiguation pages",
+    "steps": [
+      "Step 1: Call resolve function with a disambiguation page title",
+      "Step 2: Verify is_disambiguation flag is True",
+      "Step 3: Assert DISAMBIGUATION_PAGE rejection is documented",
+      "Step 4: Verify disambiguation page is rejected, not accepted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Species Match fetches taxonomy data via API",
+    "steps": [
+      "Step 1: Send GET to https://api.gbif.org/v1/species/match?name=Carcharodon carcharias",
+      "Step 2: Verify HTTP 200 response",
+      "Step 3: Assert response contains usageKey, scientificName, matchType, kingdom, phylum, class",
+      "Step 4: Verify response is valid JSON"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Species Match handles non-EXACT matches gracefully",
+    "steps": [
+      "Step 1: Query GBIF Species Match with an ambiguous or partial name",
+      "Step 2: Verify HTTP 200 response",
+      "Step 3: Assert matchType is not 'EXACT'",
+      "Step 4: Verify raw response is preserved as-is"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Species Match persists raw JSON with metadata envelope",
+    "steps": [
+      "Step 1: Call bronze GBIF taxonomy pipeline for a species",
+      "Step 2: Find the output JSON file in data/bronze/gbif_taxonomy/",
+      "Step 3: Verify file contains 'source', 'lote', 'ingested_at', 'species_queried', 'raw_responses'",
+      "Step 4: Assert 'source' field is 'gbif_taxonomy'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Species Match file naming includes batch number and ISO timestamp",
+    "steps": [
+      "Step 1: Run GBIF taxonomy fetch for batch 1",
+      "Step 2: Verify filename matches pattern lote_1__{YYYY-MM-DD}T{HH-MM-SS}Z.json",
+      "Step 3: Assert timestamp uses ISO 8601 format",
+      "Step 4: Verify file is in data/bronze/gbif_taxonomy/ directory"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Species Match persists HTTP errors without transformation",
+    "steps": [
+      "Step 1: Simulate HTTP error from GBIF Species Match API",
+      "Step 2: Verify file is still written to bronze",
+      "Step 3: Assert raw error response is preserved in raw_responses",
+      "Step 4: Verify envelope metadata is still populated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Occurrence Search fetches occurrence records with correct parameters",
+    "steps": [
+      "Step 1: Send GET to GBIF Occurrence Search with scientificName, hasCoordinate=true, limit=50",
+      "Step 2: Verify HTTP 200 response",
+      "Step 3: Assert response contains 'results' array",
+      "Step 4: Verify each result has gbifID, decimalLatitude, decimalLongitude"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Occurrence Search limit defaults to 50 records",
+    "steps": [
+      "Step 1: Query GBIF Occurrence Search without explicit limit",
+      "Step 2: Verify default limit of 50 is applied",
+      "Step 3: Assert results count <= 50 per query",
+      "Step 4: Verify query parameter includes limit=50"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Occurrence persists raw JSON with metadata envelope",
+    "steps": [
+      "Step 1: Call bronze GBIF occurrence pipeline for a species",
+      "Step 2: Find output file in data/bronze/gbif_occurrence/",
+      "Step 3: Verify envelope has source='gbif_occurrence', lote, ingested_at, species_queried, raw_responses",
+      "Step 4: Assert raw responses are complete and untransformed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Occurrence handles empty results gracefully",
+    "steps": [
+      "Step 1: Query GBIF Occurrence with a rare species that has few or no records",
+      "Step 2: Verify HTTP 200 with empty results array",
+      "Step 3: Assert raw_responses is persisted as-is",
+      "Step 4: Verify envelope still has all required metadata fields"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Occurrence persists error responses without transformation",
+    "steps": [
+      "Step 1: Simulate GBIF Occurrence API failure",
+      "Step 2: Verify file is written to bronze",
+      "Step 3: Assert raw error response is in raw_responses",
+      "Step 4: Verify envelope metadata is present"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze GBIF Occurrence includes hasCoordinate=true parameter",
+    "steps": [
+      "Step 1: Verify request URL includes hasCoordinate=true",
+      "Step 2: Assert only records with coordinates are returned",
+      "Step 3: Verify each result has non-null coordinates",
+      "Step 4: Check coordinate_uncertainty_m is present if available"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze Wikipedia fetches summary via REST API",
+    "steps": [
+      "Step 1: Send GET to https://en.wikipedia.org/api/rest_v1/page/summary/Great white shark",
+      "Step 2: Verify HTTP 200 response",
+      "Step 3: Assert response contains title, extract, page_url",
+      "Step 4: Verify response is valid JSON"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze Wikipedia fetches full extracts via action API",
+    "steps": [
+      "Step 1: Send GET to Wikipedia action API with titles=Great white shark",
+      "Step 2: Verify HTTP 200 response",
+      "Step 3: Assert response contains query.pages with extract content",
+      "Step 4: Verify explaintext=true returns plain text (no HTML/markup)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze Wikipedia persists raw responses with metadata envelope",
+    "steps": [
+      "Step 1: Call bronze Wikipedia pipeline for a species",
+      "Step 2: Find output file in data/bronze/wikipedia/",
+      "Step 3: Verify envelope has source='wikipedia', lote, ingested_at, species_queried, raw_responses",
+      "Step 4: Assert summary and extracts responses are both preserved"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze Wikipedia file naming includes batch number and ISO timestamp",
+    "steps": [
+      "Step 1: Run Wikipedia fetch for batch 1",
+      "Step 2: Verify filename matches lote_1__{YYYY-MM-DD}T{HH-MM-SS}Z.json",
+      "Step 3: Assert file is in data/bronze/wikipedia/ directory",
+      "Step 4: Verify a second batch produces lote_2 filename"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze Wikipedia persists error responses without transformation",
+    "steps": [
+      "Step 1: Fetch a nonexistent Wikipedia page",
+      "Step 2: Verify HTTP 404 response is preserved in raw_responses",
+      "Step 3: Assert envelope metadata is populated",
+      "Step 4: Verify file is written to bronze"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze supports at least 2 distinct batches per source",
+    "steps": [
+      "Step 1: Fetch data for Lote 1 across all 3 sources",
+      "Step 2: Verify files exist in each source directory with lote_1 prefix",
+      "Step 3: Fetch data for Lote 2 with different species",
+      "Step 4: Verify files exist with lote_2 prefix in each source directory"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze raw_responses preserves query and response pairs for each species",
+    "steps": [
+      "Step 1: Open a bronze JSON file with multiple species queries",
+      "Step 2: Assert raw_responses is a list of objects",
+      "Step 3: Verify each object has 'query' and 'response' fields",
+      "Step 4: Verify the response field contains the full API response"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze directory structure is created automatically",
+    "steps": [
+      "Step 1: Check data/bronze/ exists",
+      "Step 2: Verify subdirectories: gbif_taxonomy/, gbif_occurrence/, wikipedia/",
+      "Step 3: Assert directories are created if missing",
+      "Step 4: Verify data/.gitignore inside data/ (if needed)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze ingestion timestamp is in ISO 8601 format with Z suffix",
+    "steps": [
+      "Step 1: Read ingested_at from a bronze file envelope",
+      "Step 2: Assert format matches YYYY-MM-DDTHH:MM:SSZ",
+      "Step 3: Parse as ISO 8601 datetime (should not error)",
+      "Step 4: Verify timestamp corresponds to actual ingestion time"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze raw JSON files are valid JSON and can be parsed",
+    "steps": [
+      "Step 1: Open each bronze file and parse with json.load()",
+      "Step 2: Assert no parsing errors",
+      "Step 3: Verify required envelope fields present",
+      "Step 4: Verify content matches expected structure"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage Pydantic model validates species_key as string",
+    "steps": [
+      "Step 1: Create WikipediaPage with valid species_key",
+      "Step 2: Verify model is valid",
+      "Step 3: Create WikipediaPage without species_key",
+      "Step 4: Assert validation error is raised"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage Pydantic model validates title as non-empty string",
+    "steps": [
+      "Step 1: Create WikipediaPage with valid title",
+      "Step 2: Create WikipediaPage with empty title",
+      "Step 3: Assert validation error for empty title",
+      "Step 4: Verify title is stored correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage Pydantic model validates resolved_via field",
+    "steps": [
+      "Step 1: Create WikipediaPage with resolved_via='DIRECT_TITLE'",
+      "Step 2: Create WikipediaPage with resolved_via='SEARCH'",
+      "Step 3: Create WikipediaPage with resolved_via='REDIRECT'",
+      "Step 4: Verify all three are accepted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage extract validation requires minimum 50 characters",
+    "steps": [
+      "Step 1: Create WikipediaPage with extract < 50 characters",
+      "Step 2: Verify validation error for EXTRACT_TOO_SHORT",
+      "Step 3: Create WikipediaPage with extract >= 50 characters",
+      "Step 4: Verify passes validation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage validates sections_text as string",
+    "steps": [
+      "Step 1: Create WikipediaPage with valid sections_text",
+      "Step 2: Create WikipediaPage with empty sections_text",
+      "Step 3: Assert MISSING_SECTIONS_TEXT rejection",
+      "Step 4: Verify sections with content pass validation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage validates page_url as valid URL",
+    "steps": [
+      "Step 1: Create WikipediaPage with valid Wikipedia URL",
+      "Step 2: Verify URL is accepted",
+      "Step 3: Create WikipediaPage with invalid URL",
+      "Step 4: Assert validation error"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage is_disambiguation field defaults to False",
+    "steps": [
+      "Step 1: Create WikipediaPage without specifying is_disambiguation",
+      "Step 2: Assert is_disambiguation is False",
+      "Step 3: Create WikipediaPage with is_disambiguation=True",
+      "Step 4: Verify boolean field is stored correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects PAGE_NOT_FOUND and documents reason",
+    "steps": [
+      "Step 1: Process a Wikipedia page that does not exist",
+      "Step 2: Verify rejection reason is PAGE_NOT_FOUND",
+      "Step 3: Assert rejected file is written with batch_id prefix",
+      "Step 4: Verify rejected file contains enough context to diagnose"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects AMBIGUOUS_RESOLUTION and documents reason",
+    "steps": [
+      "Step 1: Process a species name that maps to multiple Wikipedia candidates",
+      "Step 2: Verify rejection reason is AMBIGUOUS_RESOLUTION",
+      "Step 3: Assert rejected file is written with details",
+      "Step 4: Verify multiple candidate titles are documented"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects EXTRACT_TOO_SHORT and documents reason",
+    "steps": [
+      "Step 1: Process a Wikipedia page with extract under 50 chars",
+      "Step 2: Verify rejection reason is EXTRACT_TOO_SHORT",
+      "Step 3: Assert extract length is documented",
+      "Step 4: Verify invalid file is written to rejected/"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects DISAMBIGUATION_PAGE and documents reason",
+    "steps": [
+      "Step 1: Process a Wikipedia page that is a disambiguation page",
+      "Step 2: Verify rejection reason is DISAMBIGUATION_PAGE",
+      "Step 3: Assert disambiguation flag is documented",
+      "Step 4: Verify rejected file includes original page metadata"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects HTTP_ERROR and documents reason",
+    "steps": [
+      "Step 1: Simulate HTTP error from Wikipedia API",
+      "Step 2: Verify rejection reason is HTTP_ERROR",
+      "Step 3: Assert HTTP status code is documented",
+      "Step 4: Verify rejected file is written"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects MISSING_SECTIONS_TEXT and documents reason",
+    "steps": [
+      "Step 1: Process Wikipedia page that returns no sections text",
+      "Step 2: Verify rejection reason is MISSING_SECTIONS_TEXT",
+      "Step 3: Assert rejected file is written",
+      "Step 4: Verify context about missing sections is included"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver valid Wikipedia records saved as individual JSON files by species_key",
+    "steps": [
+      "Step 1: Process a valid Wikipedia page",
+      "Step 2: Verify file created at data/silver/wikipedia/valid/{species_key}.json",
+      "Step 3: Assert file is valid JSON matching WikipediaPage schema",
+      "Step 4: Verify no extra fields are present"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver rejected Wikipedia records saved with batch_id prefix",
+    "steps": [
+      "Step 1: Process an invalid Wikipedia page",
+      "Step 2: Verify file at data/silver/wikipedia/rejected/{batch_id}_wikipedia_{key}.json",
+      "Step 3: Assert file contains rejection_reason field",
+      "Step 4: Verify file contains original data context"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy model validates usage_key as int",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with valid usage_key integer",
+      "Step 2: Create GBIFTaxonomy with non-integer usage_key",
+      "Step 3: Assert validation error for non-integer",
+      "Step 4: Verify usage_key is stored correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy model validates scientific_name and canonical_name",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with valid names",
+      "Step 2: Assert passes validation",
+      "Step 3: Create with empty scientific_name",
+      "Step 4: Assert validation error"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy model validates rank field",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with valid rank (e.g. 'SPECIES')",
+      "Step 2: Verify rank is accepted",
+      "Step 3: Assert rank is stored as string",
+      "Step 4: Verify rank can be None if not provided"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy model validates match_type only accepts 'EXACT' for MATCHED status",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with match_type='EXACT'",
+      "Step 2: Create GBIFTaxonomy with match_type='FUZZY'",
+      "Step 3: Verify both are valid Pydantic models",
+      "Step 4: Assert match_type is stored as string"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy model validates confidence as int",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with confidence=100",
+      "Step 2: Assert passes validation",
+      "Step 3: Create with negative confidence",
+      "Step 4: Assert validation error or behavior is defined"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy accepts optional kingdom, phylum, class_name",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with kingdom, phylum, class_name provided",
+      "Step 2: Assert passes validation",
+      "Step 3: Create without these optional fields",
+      "Step 4: Verify defaults to None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Taxonomy rejects MATCH_TYPE_NOT_EXACT when match_type != 'EXACT'",
+    "steps": [
+      "Step 1: Process GBIF taxonomy with match_type='FUZZY'",
+      "Step 2: Verify rejection reason is MATCH_TYPE_NOT_EXACT",
+      "Step 3: Assert species is marked UNMATCHED",
+      "Step 4: Verify rejected file is written"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Taxonomy rejects NO_MATCH_RETURNED when GBIF returns no candidates",
+    "steps": [
+      "Step 1: Query GBIF Species Match with a nonexistent species name",
+      "Step 2: Verify rejection reason is NO_MATCH_RETURNED",
+      "Step 3: Assert rejected file is written",
+      "Step 4: Verify context is documented"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Taxonomy rejects HTTP_ERROR on API failure",
+    "steps": [
+      "Step 1: Simulate HTTP error from GBIF Species Match",
+      "Step 2: Verify rejection reason is HTTP_ERROR",
+      "Step 3: Assert HTTP status code is documented",
+      "Step 4: Verify rejected file is written"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver valid GBIF Taxonomy saved as individual JSON by species_key",
+    "steps": [
+      "Step 1: Process valid GBIF taxonomy response (match_type='EXACT')",
+      "Step 2: Verify file at data/silver/gbif_taxonomy/valid/{species_key}.json",
+      "Step 3: Assert file matches GBIFTaxonomy schema",
+      "Step 4: Verify no extra fields"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver rejected GBIF Taxonomy saved with batch_id prefix",
+    "steps": [
+      "Step 1: Process invalid GBIF taxonomy response",
+      "Step 2: Verify file at data/silver/gbif_taxonomy/rejected/{batch_id}_gbif_taxonomy_{key}.json",
+      "Step 3: Assert file contains rejection_reason",
+      "Step 4: Verify original data context"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model validates gbif_id as int (clave natural)",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with valid int gbif_id",
+      "Step 2: Create GBIFOccurrence without gbif_id",
+      "Step 3: Assert MISSING_GBIF_ID rejection",
+      "Step 4: Create with non-int gbif_id and assert error"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model validates decimal_latitude in range [-90, 90]",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with decimal_latitude=45.0",
+      "Step 2: Assert passes",
+      "Step 3: Create with decimal_latitude=100.0",
+      "Step 4: Assert COORDINATES_OUT_OF_RANGE"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model validates decimal_longitude in range [-180, 180]",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with decimal_longitude=90.0",
+      "Step 2: Assert passes",
+      "Step 3: Create with decimal_longitude=200.0",
+      "Step 4: Assert COORDINATES_OUT_OF_RANGE"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model validates basis_of_record as string",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with valid basis_of_record (e.g. 'HUMAN_OBSERVATION')",
+      "Step 2: Assert passes",
+      "Step 3: Create without basis_of_record",
+      "Step 4: Assert MISSING_BASIS_OF_RECORD"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model accepts optional country",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with country='South Africa'",
+      "Step 2: Assert passes",
+      "Step 3: Create without country",
+      "Step 4: Verify it defaults to None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model accepts optional event_date as datetime",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with valid event_date",
+      "Step 2: Assert passes",
+      "Step 3: Create with invalid date string",
+      "Step 4: Assert INVALID_EVENT_DATE"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model accepts optional iucn_red_list_category",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with iucn_red_list_category='VULNERABLE'",
+      "Step 2: Assert passes",
+      "Step 3: Create without it",
+      "Step 4: Verify defaults to None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model accepts optional coordinate_uncertainty_m as float",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with coordinate_uncertainty_m=100.5",
+      "Step 2: Assert passes",
+      "Step 3: Create without it",
+      "Step 4: Verify defaults to None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Occurrence rejects MISSING_COORDINATES when lat/lon is null",
+    "steps": [
+      "Step 1: Process occurrence with null/None decimal_latitude",
+      "Step 2: Verify rejection reason is MISSING_COORDINATES",
+      "Step 3: Assert rejected file is written",
+      "Step 4: Verify occurrence context is preserved"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Occurrence rejects COORDINATES_OUT_OF_RANGE for invalid lat/lon",
+    "steps": [
+      "Step 1: Process occurrence with decimal_latitude=95.0",
+      "Step 2: Verify rejection reason is COORDINATES_OUT_OF_RANGE",
+      "Step 3: Assert rejected file is written",
+      "Step 4: Process occurrence with decimal_longitude=200.0 and verify same"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Occurrence rejects MISSING_GBIF_ID when gbif_id is null",
+    "steps": [
+      "Step 1: Process occurrence without gbifID",
+      "Step 2: Verify rejection reason is MISSING_GBIF_ID",
+      "Step 3: Assert rejected file is written",
+      "Step 4: Verify occurrence data is preserved"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Occurrence rejects INVALID_EVENT_DATE for unparseable dates",
+    "steps": [
+      "Step 1: Process occurrence with eventDate='not-a-date'",
+      "Step 2: Verify rejection reason is INVALID_EVENT_DATE",
+      "Step 3: Assert rejected file is written",
+      "Step 4: Process occurrence with null eventDate (should be allowed)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Occurrence rejects MISSING_BASIS_OF_RECORD",
+    "steps": [
+      "Step 1: Process occurrence with null/empty basisOfRecord",
+      "Step 2: Verify rejection reason is MISSING_BASIS_OF_RECORD",
+      "Step 3: Assert rejected file is written",
+      "Step 4: Verify original fields preserved"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver valid GBIF Occurrences saved as individual JSON by gbif_id",
+    "steps": [
+      "Step 1: Process valid occurrence records",
+      "Step 2: Verify files at data/silver/gbif_occurrence/valid/{gbif_id}.json",
+      "Step 3: Assert files match GBIFOccurrence schema",
+      "Step 4: Verify no extra fields"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver rejected GBIF Occurrences saved with batch_id prefix",
+    "steps": [
+      "Step 1: Process invalid occurrence",
+      "Step 2: Verify file at data/silver/gbif_occurrence/rejected/{batch_id}_gbif_occurrence_{key}.json",
+      "Step 3: Assert file contains rejection_reason",
+      "Step 4: Verify context preserved"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver directory structure is created for all sources (valid + rejected)",
+    "steps": [
+      "Step 1: Check data/silver/wikipedia/valid/ exists",
+      "Step 2: Check data/silver/wikipedia/rejected/ exists",
+      "Step 3: Check data/silver/gbif_taxonomy/valid/ and rejected/ exist",
+      "Step 4: Check data/silver/gbif_occurrence/valid/ and rejected/ exist"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Merge requires Wikipedia as mandatory pivot (1:1 cardinality per species)",
+    "steps": [
+      "Step 1: Run merge on a species with valid Wikipedia data",
+      "Step 2: Verify merge output includes Wikipedia fields",
+      "Step 3: Run merge trying to introduce species without Wikipedia",
+      "Step 4: Assert species is not added to species_catalog"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Species without valid Wikipedia are not added to species_catalog",
+    "steps": [
+      "Step 1: Attempt merge for a species with no valid Wikipedia page",
+      "Step 2: Verify species_key is NOT in species_catalog after merge",
+      "Step 3: Assert warning is documented in gold_build_log",
+      "Step 4: Verify species can be retried in a future batch"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "GBIF never introduces a species_key that doesn't exist in Wikipedia",
+    "steps": [
+      "Step 1: Provide only GBIF data (no Wikipedia) for an unknown species",
+      "Step 2: Verify merge does not create a new species_key",
+      "Step 3: Assert species_catalog is unchanged",
+      "Step 4: Verify pipeline continues processing other species"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "GBIF Taxonomy joined by species_key only when match_type is EXACT",
+    "steps": [
+      "Step 1: Process species with valid Wikipedia + GBIF EXACT match",
+      "Step 2: Verify taxonomy fields (kingdom, phylum, class, rank) are populated",
+      "Step 3: Assert taxonomy_status = 'MATCHED'",
+      "Step 4: Verify species_key is used as join key"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Non-EXACT GBIF Taxonomy results in UNMATCHED status (species still valid via Wikipedia)",
+    "steps": [
+      "Step 1: Process species with valid Wikipedia + GBIF non-EXACT match",
+      "Step 2: Verify taxonomy fields are null/None",
+      "Step 3: Assert taxonomy_status = 'UNMATCHED'",
+      "Step 4: Verify species is still valid and added to catalog via Wikipedia"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "GBIF Occurrence aggregated 1:N -> 1:1 summary per species",
+    "steps": [
+      "Step 1: Process species with multiple GBIF occurrence records",
+      "Step 2: Verify merge output has single occurrence summary",
+      "Step 3: Assert n_occurrences_validas matches count of valid occurrences",
+      "Step 4: Verify paises contains unique country names ordered by frequency"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "GBIFOccurrenceSummary includes n_occurrences_validas count",
+    "steps": [
+      "Step 1: Process species with 5 valid occurrences",
+      "Step 2: Verify n_occurrences_validas = 5",
+      "Step 3: Process species with 0 valid occurrences",
+      "Step 4: Verify n_occurrences_validas = 0 and augmentation empty"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "GBIFOccurrenceSummary paises ordered by frequency descending",
+    "steps": [
+      "Step 1: Process species with occurrences from countries A, B, A, C, B, A",
+      "Step 2: Verify paises list has 'A' first (most frequent)",
+      "Step 3: Verify no duplicate country names in list",
+      "Step 4: Verify counts are consistent with raw occurrence data"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "GBIFOccurrenceSummary anio_min and anio_max from occurrence date range",
+    "steps": [
+      "Step 1: Process species with occurrences dated 2010, 2015, 2020",
+      "Step 2: Verify anio_min = 2010",
+      "Step 3: Verify anio_max = 2020",
+      "Step 4: Process species with no dates and verify anio_min/anio_max are None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "GBIFOccurrenceSummary iucn_red_list_category uses mode (most frequent)",
+    "steps": [
+      "Step 1: Process species with IUCN categories: VU, VU, NT",
+      "Step 2: Verify iucn_red_list_category = 'VULNERABLE'",
+      "Step 3: For tie, verify most recent event_date determines winner",
+      "Step 4: Process with no IUCN data and verify category is None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Zero valid occurrences results in GBIF_AUGMENTATION_EMPTY (not an error)",
+    "steps": [
+      "Step 1: Process species with 0 valid occurrences",
+      "Step 2: Verify augmentation_status = 'GBIF_AUGMENTATION_EMPTY'",
+      "Step 3: Assert species is still valid via Wikipedia",
+      "Step 4: Verify occurrence summary has default empty values"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Merge output record contains all required fields",
+    "steps": [
+      "Step 1: Process a complete species through merge",
+      "Step 2: Verify output has: species_key, wikipedia_title, extract, sections_text",
+      "Step 3: Verify output has: kingdom, phylum, class_name, rank, taxonomy_status",
+      "Step 4: Verify output has: n_occurrences_validas, paises, anio_min, anio_max, iucn_red_list_category, augmentation_status"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "DuckDB file is created at data/warehouse.duckdb after first warehouse operation",
+    "steps": [
+      "Step 1: Run warehouse load for a batch",
+      "Step 2: Verify data/warehouse.duckdb file exists",
+      "Step 3: Assert it is a valid DuckDB database",
+      "Step 4: Verify it can be opened with duckdb.connect()"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "silver_wikipedia table created with species_key as PRIMARY KEY",
+    "steps": [
+      "Step 1: Connect to DuckDB and check table schema",
+      "Step 2: Verify silver_wikipedia table exists",
+      "Step 3: Assert species_key is PRIMARY KEY",
+      "Step 4: Verify it has all WikipediaPage fields as columns"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "silver_gbif_taxonomy table created with species_key as PRIMARY KEY",
+    "steps": [
+      "Step 1: Connect to DuckDB and check table schema",
+      "Step 2: Verify silver_gbif_taxonomy table exists",
+      "Step 3: Assert species_key is PRIMARY KEY",
+      "Step 4: Verify all GBIFTaxonomy fields are columns"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "silver_gbif_occurrences table created with gbif_id as PRIMARY KEY",
+    "steps": [
+      "Step 1: Connect to DuckDB and check table schema",
+      "Step 2: Verify silver_gbif_occurrences table exists",
+      "Step 3: Assert gbif_id is PRIMARY KEY",
+      "Step 4: Verify all GBIFOccurrence fields are columns"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "species_merged table created with species_key as PRIMARY KEY",
+    "steps": [
+      "Step 1: Connect to DuckDB and check table schema",
+      "Step 2: Verify species_merged table exists",
+      "Step 3: Assert species_key is PRIMARY KEY",
+      "Step 4: Verify all merge output fields are columns"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "species_catalog table created with species_key as PRIMARY KEY",
+    "steps": [
+      "Step 1: Connect to DuckDB and check table schema",
+      "Step 2: Verify species_catalog table exists",
+      "Step 3: Assert species_key is PRIMARY KEY",
+      "Step 4: Verify schema matches: scientific_name, wikipedia_title, first_seen_batch_id, first_processed_at, last_processed_at, origin"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "species_catalog origin field is 'SEED' for seed species processed first time",
+    "steps": [
+      "Step 1: Process seed batch through full pipeline",
+      "Step 2: Query species_catalog for a seed species",
+      "Step 3: Assert origin = 'SEED'",
+      "Step 4: Verify all 18 seed species have origin='SEED'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "species_catalog origin field is 'AD_HOC' for non-seed species",
+    "steps": [
+      "Step 1: Process a non-seed species (new species) through pipeline",
+      "Step 2: Query species_catalog for that species",
+      "Step 3: Assert origin = 'AD_HOC'",
+      "Step 4: Verify first_seen_batch_id documents the batch"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "UPSERT pattern uses ON CONFLICT DO UPDATE (not INSERT-only)",
+    "steps": [
+      "Step 1: Inspect warehouse INSERT statements",
+      "Step 2: Verify they use ON CONFLICT (PK) DO UPDATE",
+      "Step 3: Assert SET clause includes all relevant columns",
+      "Step 4: Verify updated_at is set to CURRENT_TIMESTAMP"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "species_catalog upserts update last_processed_at on conflict",
+    "steps": [
+      "Step 1: Process a species through pipeline",
+      "Step 2: Record last_processed_at",
+      "Step 3: Reprocess the same species after a short delay",
+      "Step 4: Verify last_processed_at is updated (newer timestamp)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "First-time species processed and inserted into species_merged",
+    "steps": [
+      "Step 1: Verify species_merged is initially empty",
+      "Step 2: Process one species through pipeline",
+      "Step 3: Query species_merged for that species_key",
+      "Step 4: Assert record exists with all merge fields populated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "species_catalog records first_seen_batch_id on first insert",
+    "steps": [
+      "Step 1: Process batch 'seed_batch_1' through pipeline",
+      "Step 2: Query species_catalog for processed species",
+      "Step 3: Assert first_seen_batch_id = 'seed_batch_1'",
+      "Step 4: Verify first_processed_at is populated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "All 5 warehouse tables are populated after pipeline execution",
+    "steps": [
+      "Step 1: Execute full pipeline for a batch",
+      "Step 2: Query row count for silver_wikipedia",
+      "Step 3: Query row count for silver_gbif_taxonomy, silver_gbif_occurrences, species_merged, species_catalog",
+      "Step 4: Assert all tables have > 0 rows"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "Warehouse UPSERT correctly updates existing records with new data",
+    "steps": [
+      "Step 1: Process batch with initial data",
+      "Step 2: Modify Wikipedia content for a species",
+      "Step 3: Reprocess same batch",
+      "Step 4: Verify species_merged.extract reflects updated content"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "Idempotency evidence: rows_new = 0 on second consecutive run of same batch",
+    "steps": [
+      "Step 1: Run full pipeline on Batch 1, record evidence",
+      "Step 2: Run full pipeline on identical Batch 1 again",
+      "Step 3: Query evidence table for second run",
+      "Step 4: Assert filas_nuevas = 0 for all 5 tables"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "Idempotency evidence table shows rows_before, rows_after, rows_new, rows_updated",
+    "steps": [
+      "Step 1: Run pipeline and generate evidence",
+      "Step 2: Access evidence table/log",
+      "Step 3: Assert it has columns: tabla, filas_antes, filas_despues, filas_nuevas, filas_actualizadas",
+      "Step 4: Verify data types are integer for counts"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "Evidence shows a non-seed species inserted as AD_HOC on first run",
+    "steps": [
+      "Step 1: Run pipeline with a new species (not in seed list)",
+      "Step 2: Check evidence for species_catalog",
+      "Step 3: Assert filas_nuevas > 0 for the new species",
+      "Step 4: Verify species_catalog has origin='AD_HOC'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Identity section populated from Wikipedia",
+    "steps": [
+      "Step 1: Build Species from merged data",
+      "Step 2: Verify Identity section is populated",
+      "Step 3: Assert Identity contains species_key and scientific_name",
+      "Step 4: Verify no data is invented"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Taxonomy section from GBIF merge fields",
+    "steps": [
+      "Step 1: Build Species with MATCHED taxonomy",
+      "Step 2: Verify Taxonomy section has kingdom, phylum, class, rank",
+      "Step 3: Build Species with UNMATCHED taxonomy",
+      "Step 4: Verify Taxonomy section fields are null/None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Morphology section extracted from Wikipedia sections_text",
+    "steps": [
+      "Step 1: Build Species from merged Wikipedia data",
+      "Step 2: Search sections_text for 'Morphology' or 'Description' section",
+      "Step 3: If found, populate Morphology section",
+      "Step 4: If not found, Morphology section is None (optional)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Distribution section extracted from Wikipedia",
+    "steps": [
+      "Step 1: Build Species from merged Wikipedia data",
+      "Step 2: Search sections_text for 'Distribution' or 'Range' section",
+      "Step 3: If found, populate Distribution section",
+      "Step 4: If not found, Distribution section is None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Habitat section extracted from Wikipedia",
+    "steps": [
+      "Step 1: Build Species from merged Wikipedia data",
+      "Step 2: Search sections_text for 'Habitat' section",
+      "Step 3: If found, populate Habitat section",
+      "Step 4: Verify section content is non-empty"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Behavior section extracted from Wikipedia",
+    "steps": [
+      "Step 1: Build Species from merged Wikipedia data",
+      "Step 2: Search sections_text for 'Behavior' section",
+      "Step 3: If found, populate Behavior section",
+      "Step 4: If not found, section is None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Diet section extracted from Wikipedia",
+    "steps": [
+      "Step 1: Build Species from merged Wikipedia data",
+      "Step 2: Search sections_text for 'Diet' or 'Feeding' section",
+      "Step 3: If found, populate Diet section",
+      "Step 4: If not found, section is None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Reproduction section extracted from Wikipedia",
+    "steps": [
+      "Step 1: Build Species from merged Wikipedia data",
+      "Step 2: Search sections_text for 'Reproduction' section",
+      "Step 3: If found, populate Reproduction section",
+      "Step 4: If not found, section is None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Conservation section extracted from Wikipedia",
+    "steps": [
+      "Step 1: Build Species from merged Wikipedia data",
+      "Step 2: Search sections_text for 'Conservation' or 'Threats' section",
+      "Step 3: If found, populate Conservation section",
+      "Step 4: If not found, section is None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Human Interaction section extracted from Wikipedia",
+    "steps": [
+      "Step 1: Build Species from merged Wikipedia data",
+      "Step 2: Search sections_text for 'Human interaction' section",
+      "Step 3: If found, populate Human Interaction section",
+      "Step 4: If not found, section is None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has References section extracted from Wikipedia",
+    "steps": [
+      "Step 1: Build Species from merged Wikipedia data",
+      "Step 2: Search sections_text for 'References' section",
+      "Step 3: If found, populate References section",
+      "Step 4: If not found, section is None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model has Multimedia section extracted from Wikipedia",
+    "steps": [
+      "Step 1: Build Species from merged Wikipedia data",
+      "Step 2: Search sections_text for 'Multimedia' or 'Gallery' section",
+      "Step 3: If found, populate Multimedia section",
+      "Step 4: If not found, section is None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "All 12 canonical sections are present in Species model (some may be None)",
+    "steps": [
+      "Step 1: Instantiate Species with merged data",
+      "Step 2: Verify all 12 section fields exist as attributes",
+      "Step 3: Assert each section is either populated string or None",
+      "Step 4: Verify no extra sections are invented"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "SpeciesChunk model has chunk_id in format {species_key}__{section}__{n}",
+    "steps": [
+      "Step 1: Create a SpeciesChunk for species 'carcharodon_carcharias' section 'Habitat'",
+      "Step 2: Verify chunk_id = 'carcharodon_carcharias__Habitat__0'",
+      "Step 3: Test with multiple chunks from same section",
+      "Step 4: Verify chunk numbering increments correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "SpeciesChunk model has species_key foreign key field",
+    "steps": [
+      "Step 1: Create SpeciesChunk with valid species_key",
+      "Step 2: Assert species_key is stored correctly",
+      "Step 3: Verify species_key references a Species model",
+      "Step 4: Assert species_key is a string"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "SpeciesChunk model has section name matching canonical sections",
+    "steps": [
+      "Step 1: Create SpeciesChunk with section='Habitat'",
+      "Step 2: Verify section is stored correctly",
+      "Step 3: Assert section matches one of the 12 canonical section names",
+      "Step 4: Test with invalid section name (assert validation error)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "SpeciesChunk model has text content field",
+    "steps": [
+      "Step 1: Create SpeciesChunk with valid text",
+      "Step 2: Assert text is stored correctly",
+      "Step 3: Create SpeciesChunk with empty text",
+      "Step 4: Assert validation error for empty text"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Chunking produces semantic chunks per canonical section (not fixed-size)",
+    "steps": [
+      "Step 1: Process a species through chunking",
+      "Step 2: Verify one SpeciesChunk per non-null canonical section",
+      "Step 3: Assert chunks correspond to semantic section boundaries",
+      "Step 4: Verify no fixed-size splitting across sections"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "SpeciesMetadata model has all filter fields for structured search",
+    "steps": [
+      "Step 1: Create SpeciesMetadata for a MATCHED species",
+      "Step 2: Verify species_key, kingdom, phylum, class_name, rank, taxonomy_status",
+      "Step 3: Verify iucn_red_list_category, paises, anio_min, anio_max, n_occurrences_validas, augmentation_status",
+      "Step 4: Assert all fields are present"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "SpeciesMetadata taxonomy_status is 'MATCHED' or 'UNMATCHED'",
+    "steps": [
+      "Step 1: Create SpeciesMetadata for species with EXACT GBIF match",
+      "Step 2: Assert taxonomy_status = 'MATCHED'",
+      "Step 3: Create SpeciesMetadata for species with non-EXACT GBIF match",
+      "Step 4: Assert taxonomy_status = 'UNMATCHED'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "SpeciesMetadata augmentation_status is 'OK' or 'GBIF_AUGMENTATION_EMPTY'",
+    "steps": [
+      "Step 1: Create SpeciesMetadata for species with valid GBIF occurrences",
+      "Step 2: Assert augmentation_status = 'OK'",
+      "Step 3: Create SpeciesMetadata with zero valid occurrences",
+      "Step 4: Assert augmentation_status = 'GBIF_AUGMENTATION_EMPTY'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "SpeciesMetadata paises is a list of strings (countries ordered by frequency)",
+    "steps": [
+      "Step 1: Create SpeciesMetadata with paises from merge",
+      "Step 2: Assert paises is a list",
+      "Step 3: Verify no duplicate values",
+      "Step 4: Assert each element is a string"
+    ],
+    "passes": false
+  },
+  {
+    "category": "embeddings",
+    "description": "BAAI/bge-small-en-v1.5 model loads successfully without internet",
+    "steps": [
+      "Step 1: Import sentence-transformers library",
+      "Step 2: Load 'BAAI/bge-small-en-v1.5' model",
+      "Step 3: Verify model loads from local cache",
+      "Step 4: Assert no external API calls are made"
+    ],
+    "passes": false
+  },
+  {
+    "category": "embeddings",
+    "description": "Embedding dimension is 384 (matching bge-small-en-v1.5)",
+    "steps": [
+      "Step 1: Load BAAI/bge-small-en-v1.5 model",
+      "Step 2: Embed a test string",
+      "Step 3: Assert embedding has 384 dimensions",
+      "Step 4: Verify embedding is a numpy array of floats"
+    ],
+    "passes": false
+  },
+  {
+    "category": "embeddings",
+    "description": "Only SpeciesChunks are embedded; Species and SpeciesMetadata skipped",
+    "steps": [
+      "Step 1: Run gold layer embedding step",
+      "Step 2: Verify embedding count == number of SpeciesChunks",
+      "Step 3: Assert Species documents are not embedded",
+      "Step 4: Assert SpeciesMetadata documents are not embedded"
+    ],
+    "passes": false
+  },
+  {
+    "category": "embeddings",
+    "description": "FAISS IndexHNSWFlat index is created successfully",
+    "steps": [
+      "Step 1: Collect all chunk embeddings",
+      "Step 2: Create FAISS IndexHNSWFlat with dim=384",
+      "Step 3: Add embeddings to index",
+      "Step 4: Verify index.ntotal() == number of chunks"
+    ],
+    "passes": false
+  },
+  {
+    "category": "embeddings",
+    "description": "FAISS index is persisted as a standalone file (not inside DuckDB)",
+    "steps": [
+      "Step 1: Save FAISS index to file",
+      "Step 2: Verify file exists at data/gold/faiss_index/",
+      "Step 3: Assert index can be loaded back from file",
+      "Step 4: Verify DuckDB database does not contain the index"
+    ],
+    "passes": false
+  },
+  {
+    "category": "embeddings",
+    "description": "Metadata parquet maps faiss_row_id -> chunk_id -> species_key",
+    "steps": [
+      "Step 1: After index build, check metadata.parquet at data/gold/faiss_index/",
+      "Step 2: Verify it has columns: faiss_row_id, chunk_id, species_key",
+      "Step 3: Assert row count matches total chunks",
+      "Step 4: Verify faiss_row_id values are sequential starting from 0"
+    ],
+    "passes": false
+  },
+  {
+    "category": "embeddings",
+    "description": "FAISS index is fully rebuilt from scratch on each pipeline run",
+    "steps": [
+      "Step 1: Run gold layer and save index",
+      "Step 2: Modify species data (add/remove species)",
+      "Step 3: Re-run gold layer",
+      "Step 4: Verify index.ntotal() reflects new chunk count"
+    ],
+    "passes": false
+  },
+  {
+    "category": "embeddings",
+    "description": "Deterministic index: same input produces same index (bitwise or structurally identical)",
+    "steps": [
+      "Step 1: Run gold layer twice with identical data",
+      "Step 2: Save both indices",
+      "Step 3: Search same query in both indices",
+      "Step 4: Assert results are identical (same scores and order)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "embeddings",
+    "description": "Embeddings do not make external API calls (fully local inference)",
+    "steps": [
+      "Step 1: Monitor network activity during embedding generation",
+      "Step 2: Assert no outbound HTTP requests are made",
+      "Step 3: Verify model runs on CPU (or available hardware)",
+      "Step 4: Assert embedding is deterministic"
+    ],
+    "passes": false
+  },
+  {
+    "category": "embeddings",
+    "description": "FAISS index directory structure is created automatically",
+    "steps": [
+      "Step 1: Run gold layer pipeline",
+      "Step 2: Verify data/gold/faiss_index/ directory exists",
+      "Step 3: Assert index.faiss file exists in directory",
+      "Step 4: Assert metadata.parquet exists in directory"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() function exists and accepts query string parameter",
+    "steps": [
+      "Step 1: Import search function from gold module",
+      "Step 2: Call search(query='shark habitat')",
+      "Step 3: Assert function returns a list",
+      "Step 4: Verify list is iterable"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() query is embedded using BAAI/bge-small-en-v1.5",
+    "steps": [
+      "Step 1: Call search(query='great white shark diet')",
+      "Step 2: Verify query gets embedded internally",
+      "Step 3: Assert embedding dimension is 384",
+      "Step 4: Verify FAISS search uses query embedding"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "FAISS search uses oversampling (top_k * 5) for better recall",
+    "steps": [
+      "Step 1: Call search(query='shark', top_k=5)",
+      "Step 2: Verify internal FAISS search retrieves >= 25 candidates",
+      "Step 3: Assert final results are <= top_k after dedup",
+      "Step 4: Verify oversampling factor is documented"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "Results are deduplicated by species_key keeping best scoring chunk",
+    "steps": [
+      "Step 1: Call search() with a query relevant to one species",
+      "Step 2: Verify each species appears at most once in final results",
+      "Step 3: Assert the chunk with highest score is kept",
+      "Step 4: Verify lower-scoring chunks from same species are removed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "Results aggregated by parent Species document",
+    "steps": [
+      "Step 1: Call search() and examine results",
+      "Step 2: Verify each result has unique species_key",
+      "Step 3: Assert results include full species context",
+      "Step 4: Verify chunk_text provides evidence"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() accepts taxonomy filter parameter",
+    "steps": [
+      "Step 1: Call search(query='shark', filtro_taxonomia={'class_name': 'Chondrichthyes'})",
+      "Step 2: Verify results are filtered by class_name",
+      "Step 3: Assert all returned species have matching taxonomy",
+      "Step 4: Test with phylum filter"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() accepts IUCN filter parameter",
+    "steps": [
+      "Step 1: Call search(query='shark', filtro_iucn='VULNERABLE')",
+      "Step 2: Verify results are filtered by IUCN category",
+      "Step 3: Assert all returned species have matching IUCN status",
+      "Step 4: Test with non-existent IUCN category (empty results expected)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() accepts country filter parameter",
+    "steps": [
+      "Step 1: Call search(query='shark', filtro_pais='South Africa')",
+      "Step 2: Verify results only include species with South Africa in paises",
+      "Step 3: Assert filter works case-insensitively or as stored",
+      "Step 4: Test with country that has no matches"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() returns list of dicts with species_key, wikipedia_title, chunk_text, score, metadata",
+    "steps": [
+      "Step 1: Call search(query='great white shark size')",
+      "Step 2: Verify each result is a dict",
+      "Step 3: Assert all required keys present in each result",
+      "Step 4: Verify score is a float between 0 and 1 (or cosine similarity)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() without filters returns diverse results across species",
+    "steps": [
+      "Step 1: Call search(query='shark', top_k=5)",
+      "Step 2: Verify 5 results are returned",
+      "Step 3: Assert multiple distinct species in results",
+      "Step 4: Verify results are sorted by relevance (highest score first)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() with multiple filters applies intersection (AND) of filters",
+    "steps": [
+      "Step 1: Call search(query='shark', filtro_pais='South Africa', filtro_iucn='VULNERABLE')",
+      "Step 2: Verify results satisfy BOTH filters",
+      "Step 3: Assert filter intersection works correctly",
+      "Step 4: Compare with single-filter results to confirm narrowing"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() returns empty list when no results match filters",
+    "steps": [
+      "Step 1: Call search(query='nonexistent species', top_k=5)",
+      "Step 2: Assert result is empty list",
+      "Step 3: Call search with impossible filter combination",
+      "Step 4: Assert empty list (not error)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() is pure Python with no external API calls at runtime",
+    "steps": [
+      "Step 1: Monitor network during search() call",
+      "Step 2: Assert no outbound HTTP requests",
+      "Step 3: Verify all data loaded from local DuckDB and FAISS files",
+      "Step 4: Assert embeddings generated locally"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() handles empty query gracefully",
+    "steps": [
+      "Step 1: Call search(query='', top_k=5)",
+      "Step 2: Verify no errors are raised",
+      "Step 3: Assert behavior is defined (return empty results or all results)",
+      "Step 4: Verify function handles empty string consistently"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "pipeline.py exists and is importable as module",
+    "steps": [
+      "Step 1: Import pipeline module from src",
+      "Step 2: Verify module has a main entry point",
+      "Step 3: Assert pipeline.py can be executed with python -m src.pipeline",
+      "Step 4: Verify pipeline has --help or documentation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline accepts list of scientific names as input",
+    "steps": [
+      "Step 1: Call pipeline with list of 3 species names",
+      "Step 2: Verify pipeline processes exactly those 3 species",
+      "Step 3: Assert no additional species are processed",
+      "Step 4: Verify partial processing is supported"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline processes full seed batch (all 18 species) end-to-end",
+    "steps": [
+      "Step 1: Run pipeline with all 18 seed species",
+      "Step 2: Verify bronze files exist for all 3 sources",
+      "Step 3: Assert silver valid files exist for processed species",
+      "Step 4: Verify species_catalog has 18 entries"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline processes ad-hoc (new) species not in seed list",
+    "steps": [
+      "Step 1: Run pipeline with a new species scientific name",
+      "Step 2: Verify species is processed through all stages",
+      "Step 3: Assert species_catalog has origin='AD_HOC'",
+      "Step 4: Verify species is searchable via search()"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline processes mixed batch (seed + ad-hoc species together)",
+    "steps": [
+      "Step 1: Run pipeline with 5 seed + 2 new species",
+      "Step 2: Verify all 7 species are processed",
+      "Step 3: Assert seed species have origin='SEED' in catalog",
+      "Step 4: Assert new species have origin='AD_HOC'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline runs bronze -> silver -> merge -> warehouse -> gold sequentially",
+    "steps": [
+      "Step 1: Execute full pipeline with logging",
+      "Step 2: Verify bronze data is written before silver processing",
+      "Step 3: Assert silver is written before merge",
+      "Step 4: Verify gold layer runs after warehouse"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline idempotency: same batch twice produces rows_new = 0 on second run",
+    "steps": [
+      "Step 1: Run pipeline on Batch A",
+      "Step 2: Run pipeline on identical Batch A again",
+      "Step 3: Query warehouse evidence for second run",
+      "Step 4: Assert all tables show filas_nuevas = 0"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline handles species with no Wikipedia match -> quarantined, not fatal",
+    "steps": [
+      "Step 1: Run pipeline with a species that has no Wikipedia page",
+      "Step 2: Verify pipeline does NOT crash",
+      "Step 3: Assert species is documented in gold_build_log",
+      "Step 4: Verify rest of batch is processed successfully"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline handles GBIF API errors without failing the batch",
+    "steps": [
+      "Step 1: Run pipeline with species that triggers GBIF errors",
+      "Step 2: Verify pipeline continues processing other species",
+      "Step 3: Assert errors are documented per species",
+      "Step 4: Verify valid species in batch complete successfully"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline produces a summary report after execution",
+    "steps": [
+      "Step 1: Run pipeline on a batch",
+      "Step 2: Verify summary output is generated",
+      "Step 3: Assert summary includes counts by stage (bronze, silver, merge, warehouse, gold)",
+      "Step 4: Verify summary includes rejection counts"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline accepts BATCH_SPECIES environment variable",
+    "steps": [
+      "Step 1: Set BATCH_SPECIES env var with comma-separated species names",
+      "Step 2: Run pipeline",
+      "Step 3: Verify pipeline reads and processes the listed species",
+      "Step 4: Assert no other species are processed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline accepts --species-file argument for batch definition",
+    "steps": [
+      "Step 1: Create a file with scientific names (one per line)",
+      "Step 2: Run pipeline with --species-file argument",
+      "Step 3: Verify pipeline processes species from file",
+      "Step 4: Assert JSON output matches expected"
+    ],
+    "passes": false
+  },
+  {
+    "category": "pipeline",
+    "description": "Pipeline handles empty batch gracefully (no species provided)",
+    "steps": [
+      "Step 1: Run pipeline with empty species list",
+      "Step 2: Verify no errors are raised",
+      "Step 3: Assert pipeline exits cleanly with informative message",
+      "Step 4: Verify no data files are created"
+    ],
+    "passes": false
+  },
+  {
+    "category": "docker",
+    "description": "Dockerfile uses python:3.11-slim base image",
+    "steps": [
+      "Step 1: Read Dockerfile",
+      "Step 2: Verify FROM python:3.11-slim",
+      "Step 3: Assert no larger base image is used",
+      "Step 4: Verify Dockerfile installs requirements.txt"
+    ],
+    "passes": false
+  },
+  {
+    "category": "docker",
+    "description": "Dockerfile installs all dependencies from requirements.txt",
+    "steps": [
+      "Step 1: Read Dockerfile",
+      "Step 2: Verify COPY requirements.txt",
+      "Step 3: Assert RUN pip install -r requirements.txt",
+      "Step 4: Verify no missing dependencies"
+    ],
+    "passes": false
+  },
+  {
+    "category": "docker",
+    "description": "docker-compose.yml defines pipeline service",
+    "steps": [
+      "Step 1: Read docker-compose.yml",
+      "Step 2: Verify 'pipeline' service exists",
+      "Step 3: Assert pipeline service runs src/pipeline.py",
+      "Step 4: Verify command or entrypoint is correct"
+    ],
+    "passes": false
+  },
+  {
+    "category": "docker",
+    "description": "docker-compose.yml defines notebook (Jupyter Lab) service",
+    "steps": [
+      "Step 1: Read docker-compose.yml",
+      "Step 2: Verify 'notebook' service exists",
+      "Step 3: Assert notebook runs Jupyter Lab",
+      "Step 4: Verify notebook port is exposed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "docker",
+    "description": "Pipeline service mounts ./data volume for state persistence",
+    "steps": [
+      "Step 1: Read docker-compose.yml",
+      "Step 2: Verify pipeline service has volumes section",
+      "Step 3: Assert ./data is mounted (local:container)",
+      "Step 4: Verify mount path in container matches expected data directory"
+    ],
+    "passes": false
+  },
+  {
+    "category": "docker",
+    "description": "Pipeline service accepts BATCH_SPECIES env var",
+    "steps": [
+      "Step 1: Read docker-compose.yml",
+      "Step 2: Verify pipeline service has environment section",
+      "Step 3: Assert BATCH_SPECIES is documented or can be passed",
+      "Step 4: Verify env var maps to pipeline argument"
+    ],
+    "passes": false
+  },
+  {
+    "category": "docker",
+    "description": "Notebook service mounts ./data and ./src volumes",
+    "steps": [
+      "Step 1: Read docker-compose.yml",
+      "Step 2: Verify notebook service has volumes section",
+      "Step 3: Assert ./data and ./src are mounted",
+      "Step 4: Verify mount paths are correct for notebook access"
+    ],
+    "passes": false
+  },
+  {
+    "category": "docker",
+    "description": "requirements.txt contains all required dependencies",
+    "steps": [
+      "Step 1: Read requirements.txt",
+      "Step 2: Verify pydantic is listed",
+      "Step 3: Verify duckdb, sentence-transformers, faiss-cpu, requests, jupyterlab, pandas are listed",
+      "Step 4: Assert version constraints are specified (at minimum minimum versions)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "docker",
+    "description": "Docker Compose setup is fully local (no external service dependencies)",
+    "steps": [
+      "Step 1: Verify docker-compose.yml has no 'depends_on' external services",
+      "Step 2: Assert no external DB or network services are required",
+      "Step 3: Verify all services are container-local",
+      "Step 4: Assert no cloud API keys are needed for build"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_quality",
+    "description": "Pipeline is deterministic: same inputs produce identical outputs",
+    "steps": [
+      "Step 1: Run pipeline twice with identical batch",
+      "Step 2: Compare species_merged table content",
+      "Step 3: Assert all text fields are identical",
+      "Step 4: Verify numerical fields match"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_quality",
+    "description": "All rejection reasons are explicit and documented per record",
+    "steps": [
+      "Step 1: Examine rejected/ directories in silver",
+      "Step 2: Each file must contain rejection_reason field",
+      "Step 3: Assert reasons match the defined enum values",
+      "Step 4: Verify original data is preserved with rejection"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_quality",
+    "description": "No data is lost or silently dropped between pipeline stages",
+    "steps": [
+      "Step 1: Process batch and count at each stage",
+      "Step 2: Verify valid + rejected counts match source data",
+      "Step 3: Assert species not lost between bronze and silver",
+      "Step 4: Verify merge preserves all valid silver records"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_quality",
+    "description": "All JSON files are valid and parseable",
+    "steps": [
+      "Step 1: Recursively list all .json files in data/",
+      "Step 2: Parse each file with json.load()",
+      "Step 3: Assert no files fail parsing",
+      "Step 4: Verify file structure matches expected format"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_quality",
+    "description": "Records are traceable across all pipeline stages",
+    "steps": [
+      "Step 1: Choose a species_key",
+      "Step 2: Find it in bronze, silver, merge output, warehouse, and gold",
+      "Step 3: Assert species_key exists at every stage",
+      "Step 4: Verify data consistency across stages"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_quality",
+    "description": "Gold layer only contains species with valid Wikipedia in species_catalog",
+    "steps": [
+      "Step 1: Run pipeline on a batch with some invalid Wikipedia species",
+      "Step 2: Verify gold layer only has valid species",
+      "Step 3: Assert invalid species are not in FAISS index",
+      "Step 4: Verify species_catalog matches gold layer species"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "End-to-end: Process seed batch from bronze to search in a single run",
+    "steps": [
+      "Step 1: Run full pipeline on first 9 seed species (Lote 1)",
+      "Step 2: Verify bronze files created",
+      "Step 3: Verify silver valid files created",
+      "Step 4: Verify search() returns results for those species"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "End-to-end: Process new species and confirm it's queryable",
+    "steps": [
+      "Step 1: Choose a species NOT in seed list",
+      "Step 2: Run full pipeline with that single species",
+      "Step 3: Verify species_catalog has origin='AD_HOC'",
+      "Step 4: Verify search() for that species returns results"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "Idempotency: two consecutive runs of full seed batch produce rows_new = 0",
+    "steps": [
+      "Step 1: Run full pipeline on all 18 seed species",
+      "Step 2: Record evidence table",
+      "Step 3: Run full pipeline on same 18 species again",
+      "Step 4: Assert all 5 warehouse tables have filas_nuevas = 0"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "Search returns relevant results for a natural language query about shark diet",
+    "steps": [
+      "Step 1: Run pipeline to populate data",
+      "Step 2: Call search(query='what do great white sharks eat')",
+      "Step 3: Assert 'Carcharodon carcharias' is in top results",
+      "Step 4: Verify result text contains diet-related content"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "Search with taxonomy filter returns only matching species",
+    "steps": [
+      "Step 1: Call search with filtro_taxonomia={'class_name': 'Chondrichthyes'}",
+      "Step 2: Assert all results have class_name = 'Chondrichthyes'",
+      "Step 3: Call search with non-matching filter",
+      "Step 4: Assert empty results (or graceful handling)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "Search with IUCN filter returns only species with specified conservation status",
+    "steps": [
+      "Step 1: Call search with filtro_iucn='VULNERABLE'",
+      "Step 2: Assert all results have iucn_red_list_category='VULNERABLE'",
+      "Step 3: Verify multiple IUCN categories are filterable",
+      "Step 4: Test with 'LEAST_CONCERN' if available"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "Search with country filter returns only species found in that country",
+    "steps": [
+      "Step 1: Call search with filtro_pais='South Africa'",
+      "Step 2: Assert all results have 'South Africa' in paises list",
+      "Step 3: Verify results are geographically relevant",
+      "Step 4: Test with a country that has few records"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "Search without filters returns top-k results across all species",
+    "steps": [
+      "Step 1: Call search(query='shark', top_k=5, no filters)",
+      "Step 2: Assert exactly 5 results",
+      "Step 3: Verify multiple species are represented",
+      "Step 4: Assert results are sorted by descending score"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "End-to-end: Lote 1 (9 species) processing demonstrates reproducibility",
+    "steps": [
+      "Step 1: Run pipeline on first 9 seed species",
+      "Step 2: Verify bronze files for lote_1 exist",
+      "Step 3: Verify species_catalog has 9 entries",
+      "Step 4: Verify search results are relevant"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "End-to-end: Lote 2 (last 9 species) processed independently",
+    "steps": [
+      "Step 1: Run pipeline on remaining 9 seed species",
+      "Step 2: Verify bronze files for lote_2 exist",
+      "Step 3: Verify species_catalog now has all 18 entries",
+      "Step 4: Verify search works across all 18 species"
+    ],
+    "passes": false
+  },
+  {
+    "category": "project",
+    "description": "src/ directory has all expected subdirectories",
+    "steps": [
+      "Step 1: List src/ directory",
+      "Step 2: Verify bronze/, silver/, merge/, warehouse/, gold/, resolver/, config/ exist",
+      "Step 3: Assert pipeline.py exists at src/pipeline.py",
+      "Step 4: Verify each module has __init__.py"
+    ],
+    "passes": false
+  },
+  {
+    "category": "project",
+    "description": "Each src module is importable",
+    "steps": [
+      "Step 1: Import src.bronze",
+      "Step 2: Import src.silver, src.merge, src.warehouse, src.gold, src.resolver, src.config",
+      "Step 3: Import src.pipeline",
+      "Step 4: Assert no ImportError"
+    ],
+    "passes": false
+  },
+  {
+    "category": "project",
+    "description": ".gitignore properly excludes Python generated files and data/ directory",
+    "steps": [
+      "Step 1: Read .gitignore",
+      "Step 2: Verify __pycache__/ is ignored",
+      "Step 3: Verify data/ is ignored",
+      "Step 4: Verify .venv is ignored"
+    ],
+    "passes": false
+  },
+  {
+    "category": "project",
+    "description": "README.md provides project overview, architecture summary, and setup instructions",
+    "steps": [
+      "Step 1: Read README.md",
+      "Step 2: Verify it describes the Shark Knowledge Medallion Architecture",
+      "Step 3: Assert setup/quick start instructions are present",
+      "Step 4: Verify Docker usage is documented"
+    ],
+    "passes": false
+  },
+  {
+    "category": "project",
+    "description": "init.sh script exists and is executable",
+    "steps": [
+      "Step 1: Check init.sh exists in project root",
+      "Step 2: Assert file has execute permission",
+      "Step 3: Verify script installs Python dependencies",
+      "Step 4: Verify script prints helpful access information"
+    ],
+    "passes": false
+  },
+  {
+    "category": "project",
+    "description": "init.sh installs all required dependencies from requirements.txt",
+    "steps": [
+      "Step 1: Run init.sh in a clean environment",
+      "Step 2: Verify pip install executes without errors",
+      "Step 3: Assert all dependencies are installed",
+      "Step 4: Verify import of all major packages works"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "slugify handles edge cases: empty string, None, special characters",
+    "steps": [
+      "Step 1: Call slugify('') and verify behavior is defined",
+      "Step 2: Call slugify with None and verify error handling",
+      "Step 3: Call slugify with special characters and verify they are handled",
+      "Step 4: Assert slugify never raises unexpected exceptions"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze Wikipedia summary handles missing page (404) gracefully",
+    "steps": [
+      "Step 1: Fetch summary for nonexistent Wikipedia page",
+      "Step 2: Verify HTTP 404 response",
+      "Step 3: Assert error is persisted rather than crashing",
+      "Step 4: Verify pipeline continues processing other species"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia validation checks page_url format contains en.wikipedia.org",
+    "steps": [
+      "Step 1: Create WikipediaPage with valid en.wikipedia.org URL",
+      "Step 2: Assert passes validation",
+      "Step 3: Create WikipediaPage with non-Wikipedia URL",
+      "Step 4: Assert validation error for invalid URL domain"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Merge handles species where both GBIF taxonomy AND occurrences are absent",
+    "steps": [
+      "Step 1: Process species with valid Wikipedia but no GBIF data at all",
+      "Step 2: Verify taxonomy_status = 'UNMATCHED'",
+      "Step 3: Verify augmentation_status = 'GBIF_AUGMENTATION_EMPTY'",
+      "Step 4: Assert species is still valid in Gold via Wikipedia alone"
+    ],
+    "passes": false
+  },
+  {
+    "category": "warehouse",
+    "description": "Warehouse handles concurrent or sequential batch loads without data corruption",
+    "steps": [
+      "Step 1: Run pipeline with Batch A (5 species)",
+      "Step 2: Run pipeline with Batch B (different 5 species) without resetting",
+      "Step 3: Verify species_catalog has all 10 species",
+      "Step 4: Assert no records from Batch A are lost or corrupted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Species model serializes to JSON and back without data loss",
+    "steps": [
+      "Step 1: Create a fully populated Species model",
+      "Step 2: Serialize to JSON",
+      "Step 3: Deserialize back to Species",
+      "Step 4: Assert all fields match original"
+    ],
+    "passes": false
+  },
+  {
+    "category": "retrieval",
+    "description": "search() returns empty list when FAISS index is empty (no species loaded)",
+    "steps": [
+      "Step 1: Ensure FAISS index has no vectors (fresh state)",
+      "Step 2: Call search(query='shark', top_k=5)",
+      "Step 3: Assert empty list is returned",
+      "Step 4: Verify no errors or crashes"
+    ],
+    "passes": false
+  }
+]

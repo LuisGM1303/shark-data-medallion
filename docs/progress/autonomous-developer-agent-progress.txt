@@ -1,0 +1,40 @@
+Session 1 - Initializer Agent
+==============================
+Date: 2026-07-23
+
+Accomplished:
+- Read and analyzed the full project specification (docs/specs/app_specs.txt)
+- Created docs/features/feature_list.json with 200 comprehensive test cases covering:
+  * Config (seed species, pyproject.toml)
+  * Resolver (slugify, Wikipedia title resolution)
+  * Bronze layer (GBIF taxonomy, GBIF occurrence, Wikipedia API, persistence)
+  * Silver layer (Wikipedia, GBIF taxonomy, GBIF occurrence validation + rejection)
+  * Merge layer (Wikipedia pivot, GBIF augmentation, occurrence aggregation)
+  * Warehouse (DuckDB schema, UPSERT, species_catalog, idempotency evidence)
+  * Gold layer (Species model, 12 canonical sections, SpeciesChunk, SpeciesMetadata)
+  * Embeddings (BAAI/bge-small-en-v1.5, FAISS IndexHNSWFlat, metadata parquet)
+  * Retrieval (search() function, oversampling, dedup, filters)
+  * Pipeline (orchestration, batch processing, idempotency, error handling)
+  * Docker (Dockerfile, docker-compose with pipeline + notebook services)
+  * Data quality (determinism, auditability, traceability)
+  * Integration (end-to-end batch processing, search with filters)
+- Updated pyproject.toml with all required dependencies
+- Created init.sh (uv-based environment setup script)
+- Created README.md with project overview, architecture diagram, and instructions
+- Created full project structure:
+  src/
+  ├── bronze/fetcher.py
+  ├── silver/models.py, validator.py
+  ├── merge/merger.py
+  ├── warehouse/loader.py
+  ├── gold/models.py, indexer.py
+  ├── resolver/slugify.py, wikipedia.py
+  ├── config/seed_species.py
+  └── pipeline.py
+- Created Dockerfile and docker-compose.yml
+
+All tests start with "passes": false.
+Next session should begin implementing the highest-priority features starting with
+the config/resolver modules, then bronze layer, silver layer, etc.
+
+Commit: Initial setup with feature_list.json, init.sh, project structure, and docs
