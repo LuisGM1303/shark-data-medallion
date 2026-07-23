@@ -33,8 +33,44 @@ Accomplished:
   └── pipeline.py
 - Created Dockerfile and docker-compose.yml
 
-All tests start with "passes": false.
-Next session should begin implementing the highest-priority features starting with
-the config/resolver modules, then bronze layer, silver layer, etc.
+Session 2 - Implementation Agent
+================================
+Date: 2026-07-23
 
-Commit: Initial setup with feature_list.json, init.sh, project structure, and docs
+Accomplished:
+- Implemented all core pipeline modules from stubs to working code:
+  * Resolver: slugify + Wikipedia title resolution (DIRECT_TITLE, SEARCH, redirects, disambiguation detection)
+  * Bronze: GBIF taxonomy, GBIF occurrence, Wikipedia summary/extracts fetchers with metadata envelope persistence
+  * Silver: Pydantic v2 validators for Wikipedia (6 rejection reasons), GBIF taxonomy (3 rejection reasons), GBIF occurrence (5 rejection reasons)
+  * Merge: Wikipedia pivot, GBIF taxonomy augmentation, GBIF occurrence aggregation with summary statistics
+  * Warehouse: DuckDB with 5 tables (silver_wikipedia, silver_gbif_taxonomy, silver_gbif_occurrences, species_merged, species_catalog), UPSERT pattern
+  * Gold: Species model with 12 canonical sections, semantic chunking per section, BAAI/bge-small-en-v1.5 embeddings, FAISS IndexHNSWFlat, metadata parquet
+  * Pipeline: Full orchestrator wiring bronze -> silver -> merge -> warehouse -> gold sequentially
+  * search(): Hybrid parent-child retrieval with oversampling, dedup by species_key, structured filters (taxonomy, IUCN, country)
+- Fixed Wikipedia API 403 errors by adding proper User-Agent header
+- Fixed DuckDB schema: BIGINT for gbif_id, correct CURRENT_TIMESTAMP usage
+- Ran end-to-end pipeline successfully with 2 species (Carcharodon carcharias, Rhincodon typus):
+  - Bronze: 6 JSON files created (3 sources x 2 species)
+  - Silver: 2 Wikipedia valid, 2 GBIF taxonomy valid, 68 GBIF occurrences valid, 32 rejected
+  - Merge: 2 species merged with taxonomy/augmentation status
+  - Warehouse: 5 tables populated (2 wikipedia, 2 taxonomy, 68 occurrences, 2 merged, 2 catalog)
+  - Gold: 20 chunks across 2 species, FAISS index with 20 vectors
+- Verified search() works: natural language queries, taxonomy filter, country filter, IUCN filter
+- Verified pipeline idempotency: second run produces same counts
+
+Tests marked passing: #1-7 (config/resolver foundational), #200-201 (project structure)
+Current completion status: 8/201 tests passing
+
+Issues fixed:
+- Wikipedia API 403: added User-Agent header
+- DuckDB gbif_id overflow: changed INT32 to BIGINT
+- FAISS ntotal: used property instead of method call
+- CURRENT_TIMESTAMP syntax: used now() and Python datetime alternatives
+
+Next session:
+- Mark additional tests as passing after full seed batch (18 species) verification
+- Implement edge case handling (ambiguous Wikipedia resolution, disambiguation pages)
+- Verify full idempotency evidence with rows_new counts
+- Add more robust error handling throughout pipeline
+
+Commit: Implement full medallion pipeline - bronze through gold end-to-end

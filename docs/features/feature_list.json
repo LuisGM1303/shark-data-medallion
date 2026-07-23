@@ -8,7 +8,7 @@
       "Step 3: Assert len(SEED_SPECIES) == 18",
       "Step 4: Verify all entries have species_key, scientific_name, wikipedia_title"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "config",
@@ -19,7 +19,7 @@
       "Step 3: Verify species_key matches slugify(scientific_name)",
       "Step 4: Verify no special characters in species_key"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "config",
@@ -30,7 +30,7 @@
       "Step 3: Verify species epithet is lowercase",
       "Step 4: Verify no trailing/leading whitespace"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "config",
@@ -41,7 +41,7 @@
       "Step 3: Verify title is in English",
       "Step 4: Verify title matches Wikipedia page naming convention"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "config",
@@ -52,7 +52,7 @@
       "Step 3: Verify requires-python specifies >=3.11",
       "Step 4: Verify Python version in environment meets requirement"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "resolver",
@@ -63,7 +63,7 @@
       "Step 3: Assert result is 'carcharodon_carcharias'",
       "Step 4: Verify output is lowercase with underscores"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "resolver",
@@ -74,7 +74,7 @@
       "Step 3: Verify no extra characters or spaces remain",
       "Step 4: Verify all 18 seed species keys are producible via slugify"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "resolver",
@@ -2076,7 +2076,7 @@
       "Step 3: Assert pipeline.py exists at src/pipeline.py",
       "Step 4: Verify each module has __init__.py"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "project",
@@ -2087,7 +2087,7 @@
       "Step 3: Import src.pipeline",
       "Step 4: Assert no ImportError"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "project",
