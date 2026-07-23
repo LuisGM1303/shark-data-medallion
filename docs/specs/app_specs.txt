@@ -1,0 +1,532 @@
+Software Architecture Specification (SAS)
+
+Shark Knowledge Medallion Architecture — Versión Consolidada
+
+Version: 1.0 
+
+1. Purpose
+
+Esta especificación define una arquitectura de datos determinista, local-first,
+implementada en Python, para construir una base de conocimiento especializada
+sobre tiburones usando una Arquitectura Medallón (Bronze -> Silver -> Merge ->
+Warehouse -> Gold).
+
+Objetivos primarios:
+- Integrar GBIF (taxonomía + registros de ocurrencia) y Wikipedia en inglés.
+- Construir un Modelo de Conocimiento Canónico por especie.
+- Soportar búsqueda semántica híbrida vía Retrieval Parent-Child.
+- Mantener el pipeline simple, determinista, idempotente y auditable.
+- El Query Planner queda explícitamente fuera de alcance (ver sección 15).
+
+2. Scope
+
+Fuentes de datos:
+- GBIF Species Match API (taxonomía: kingdom, phylum, class, rank).
+- GBIF Occurrence Search API (ocurrencias: país, coordenadas, fecha, IUCN).
+- Wikipedia en inglés, REST API (summary + extracts completos por secciones).
+
+Implementación local vía Docker Compose, DuckDB (warehouse), FAISS
+IndexHNSWFlat (índice vectorial) y un modelo de embeddings local.
+
+Ninguna fuente requiere autenticación.
+
+3. Universo de Especies (Lote Semilla + Catálogo Abierto)
+
+La unidad de trabajo del sistema es la especie, identificada por species_key.
+El universo de especies NO es cerrado: el sistema debe aceptar, procesar y
+agregar especies nuevas en cualquier momento. La lista de 18 especies de
+config/seed_species.py deja de ser una lista de control de acceso y pasa a
+ser únicamente un lote semilla, usado para poder demostrar el pipeline de
+forma reproducible sin depender de qué especies existan ya en el catálogo:
+
+    SEED_SPECIES = [
+        {"species_key": "carcharodon_carcharias",   "scientific_name": "Carcharodon carcharias",   "wikipedia_title": "Great white shark"},
+        {"species_key": "rhincodon_typus",           "scientific_name": "Rhincodon typus",           "wikipedia_title": "Whale shark"},
+        {"species_key": "cetorhinus_maximus",        "scientific_name": "Cetorhinus maximus",        "wikipedia_title": "Basking shark"},
+        {"species_key": "galeocerdo_cuvier",         "scientific_name": "Galeocerdo cuvier",         "wikipedia_title": "Tiger shark"},
+        {"species_key": "sphyrna_mokarran",          "scientific_name": "Sphyrna mokarran",          "wikipedia_title": "Great hammerhead"},
+        {"species_key": "sphyrna_lewini",            "scientific_name": "Sphyrna lewini",            "wikipedia_title": "Scalloped hammerhead"},
+        {"species_key": "prionace_glauca",           "scientific_name": "Prionace glauca",           "wikipedia_title": "Blue shark"},
+        {"species_key": "isurus_oxyrinchus",         "scientific_name": "Isurus oxyrinchus",         "wikipedia_title": "Shortfin mako shark"},
+        {"species_key": "carcharhinus_leucas",       "scientific_name": "Carcharhinus leucas",       "wikipedia_title": "Bull shark"},
+        {"species_key": "carcharhinus_longimanus",   "scientific_name": "Carcharhinus longimanus",   "wikipedia_title": "Oceanic whitetip shark"},
+        {"species_key": "triaenodon_obesus",         "scientific_name": "Triaenodon obesus",         "wikipedia_title": "Whitetip reef shark"},
+        {"species_key": "carcharhinus_melanopterus", "scientific_name": "Carcharhinus melanopterus", "wikipedia_title": "Blacktip reef shark"},
+        {"species_key": "somniosus_microcephalus",   "scientific_name": "Somniosus microcephalus",   "wikipedia_title": "Greenland shark"},
+        {"species_key": "squalus_acanthias",         "scientific_name": "Squalus acanthias",         "wikipedia_title": "Spiny dogfish"},
+        {"species_key": "heterodontus_francisci",    "scientific_name": "Heterodontus francisci",    "wikipedia_title": "Horn shark"},
+        {"species_key": "carcharhinus_falciformis",  "scientific_name": "Carcharhinus falciformis",  "wikipedia_title": "Silky shark"},
+        {"species_key": "alopias_vulpinus",          "scientific_name": "Alopias vulpinus",          "wikipedia_title": "Common thresher shark"},
+        {"species_key": "ginglymostoma_cirratum",    "scientific_name": "Ginglymostoma cirratum",    "wikipedia_title": "Nurse shark"},
+    ]
+
+species_key es el identificador canónico usado en Bronze, Silver, Merge,
+Warehouse y Gold. Se genera de forma determinista a partir del nombre
+científico (slugify: minúsculas, espacios -> guion bajo), tanto para las
+especies del lote semilla como para cualquier especie nueva:
+
+    species_key = slugify(scientific_name)   # "Prionace glauca" -> "prionace_glauca"
+
+Especies nuevas (fuera del lote semilla):
+- Se solicitan al pipeline solo con el nombre científico.
+- El sistema resuelve automáticamente el título de Wikipedia vía
+  búsqueda (search) y sigue redirects. Si no hay un match confiable, la
+  especie se cuarentena (ver sección 8.1) en lugar de fallar el lote
+  completo.
+- GBIF Species Match y Occurrence Search ya funcionan de forma genérica
+  por scientificName, sin depender de ninguna lista fija.
+- Al completar Silver + Merge exitosamente, la especie se registra en
+  species_catalog (sección 10) — ese es el momento en que "se agrega a la
+  arquitectura".
+
+Definición de "lote" (batch):
+- Un lote es cualquier conjunto de especies (nombres científicos) que se
+  entrega como input a una corrida del pipeline — puede ser el lote
+  semilla completo, un subconjunto de él, especies nuevas, o una mezcla
+  de ambas. El lote semilla de 18 especies se sigue usando como input por
+  defecto para las demostraciones de reproducibilidad, dividido en
+  Lote 1 (primeras 9) y Lote 2 (últimas 9) solo como convención de
+  ejemplo, no como restricción del sistema.
+- La prueba de idempotencia se hace reprocesando exactamente el mismo
+  conjunto de especies dos veces seguidas: species_catalog y las tablas
+  del warehouse deben mostrar filas_nuevas = 0 en la segunda corrida,
+  sea el lote semilla o cualquier conjunto de especies nuevas.
+
+4. Architectural Principles
+
+- Pipeline determinista y local-first.
+- Python-first, sin formalismo de Ports & Adapters: módulos simples por etapa
+  (bronze/, silver/, merge/, warehouse/, gold/, config/).
+- Procesamiento idempotente.
+- Contratos de datos explícitos (Pydantic v2).
+- Wikipedia como fuente pivote; GBIF como fuente de augmentation.
+- Reproducibilidad y trazabilidad de cada etapa.
+- Extensibilidad futura sin sobre-diseño presente (KISS).
+
+5. Quality Attributes
+
+- Reproducibilidad e idempotencia (rows_new = 0 al reprocesar un lote).
+- Auditabilidad (motivo de rechazo explícito por registro).
+- Mantenibilidad (módulos simples y desacoplados por etapa).
+- Retrieval híbrido (semántico + filtros estructurados).
+- Portabilidad y ejecución 100% local.
+
+6. Data Architecture — Vista General
+
+    GBIF Species Match ──┐
+    GBIF Occurrence ─────┼──► BRONZE (JSON crudo, timestamped)
+    Wikipedia (en) ───────┘
+                │
+                ▼
+    SILVER (contratos Pydantic independientes por fuente
+            + granularidad propia: especie, ocurrencia o página)
+                │
+                ▼
+    MERGE (Wikipedia = pivote 1:1, GBIF = augmentation agregada)
+                │
+                ▼
+    WAREHOUSE (DuckDB, UPSERT idempotente por clave natural)
+                │
+                ▼
+    GOLD (Species / SpeciesChunk / SpeciesMetadata, FAISS IndexHNSWFlat)
+
+7. Bronze Layer
+
+Requisito transversal: JSON crudo, íntegro, sin transformar, con timestamp en
+el nombre del archivo. Al menos dos lotes por fuente.
+
+    data/bronze/gbif_taxonomy/lote_1__2026-07-22T10-00-00Z.json
+    data/bronze/gbif_occurrence/lote_1__2026-07-22T10-02-00Z.json
+    data/bronze/wikipedia/lote_1__2026-07-22T10-01-00Z.json
+
+Envelope de metadatos por archivo:
+
+    {
+      "source": "wikipedia" | "gbif_taxonomy" | "gbif_occurrence",
+      "lote": 1,
+      "ingested_at": "2026-07-22T10:00:00Z",
+      "species_queried": ["Carcharodon carcharias", "..."],
+      "raw_responses": [ { "query": "...", "response": { ... } } ]
+    }
+
+Endpoints:
+- GBIF Species Match: GET https://api.gbif.org/v1/species/match?name={scientificName}
+- GBIF Occurrence Search: GET https://api.gbif.org/v1/occurrence/search?scientificName={nombre}&hasCoordinate=true&limit=50
+- Wikipedia summary: GET https://en.wikipedia.org/api/rest_v1/page/summary/{title}
+- Wikipedia extractos completos: GET https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=true&titles={title}&format=json
+
+Regla dura de Bronze: nada se descarta ni transforma; incluso errores HTTP o
+respuestas vacías se persisten tal cual para que Silver decida.
+
+8. Silver Layer
+
+Tres contratos Pydantic v2 independientes, cada uno con su propia partición
+válidos/rechazados, persistida como JSON individual por registro (no
+Parquet), para mantener la inspección simple:
+
+    data/silver/{fuente}/valid/{species_key_o_gbif_id}.json
+    data/silver/{fuente}/rejected/{batch_id}_{fuente}_{clave}.json
+
+8.1 Contrato Wikipedia (nivel página, cardinalidad 1 por species_key)
+
+    class WikipediaPage(BaseModel):
+        species_key: str
+        title: str
+        resolved_via: str            # DIRECT_TITLE | SEARCH | REDIRECT
+        extract: str                 # min 50 caracteres
+        sections_text: str
+        page_url: str
+        is_disambiguation: bool = False
+
+    Motivos de rechazo:
+    - PAGE_NOT_FOUND            (búsqueda/redirect no encontró un artículo)
+    - AMBIGUOUS_RESOLUTION      (varios candidatos sin match confiable)
+    - EXTRACT_TOO_SHORT
+    - DISAMBIGUATION_PAGE
+    - HTTP_ERROR
+    - MISSING_SECTIONS_TEXT
+
+8.2 Contrato GBIF Taxonomy (nivel especie, cardinalidad 1 por species_key)
+
+    class GBIFTaxonomy(BaseModel):
+        species_key: str
+        usage_key: int
+        scientific_name: str
+        canonical_name: str
+        rank: str
+        match_type: str               # solo 'EXACT' se acepta como MATCHED
+        confidence: int
+        kingdom: Optional[str] = None
+        phylum: Optional[str] = None
+        class_name: Optional[str] = None
+
+    Motivos de rechazo:
+    - MATCH_TYPE_NOT_EXACT   (matchType != 'EXACT' -> especie marcada UNMATCHED)
+    - HTTP_ERROR
+    - NO_MATCH_RETURNED      (GBIF no devuelve ningún candidato)
+
+8.3 Contrato GBIF Occurrence (nivel ocurrencia individual, cardinalidad N por species_key)
+
+    class GBIFOccurrence(BaseModel):
+        gbif_id: int                  # clave natural
+        species_key: str
+        decimal_latitude: float       # rango [-90, 90]
+        decimal_longitude: float      # rango [-180, 180]
+        country: Optional[str] = None
+        event_date: Optional[datetime] = None
+        basis_of_record: str
+        iucn_red_list_category: Optional[str] = None
+        coordinate_uncertainty_m: Optional[float] = None
+
+    Motivos de rechazo:
+    - MISSING_COORDINATES
+    - COORDINATES_OUT_OF_RANGE
+    - MISSING_GBIF_ID
+    - INVALID_EVENT_DATE
+    - MISSING_BASIS_OF_RECORD
+
+9. Merge Layer (Knowledge Integration)
+
+Regla de augmentation robusta:
+
+1. Wikipedia es mandatorio y pivote (cardinalidad 1:1). Si una especie del
+   lote (semilla o nueva) no tiene página Wikipedia válida en Silver, no
+   se agrega a species_catalog ni al universo: se documenta como
+   advertencia en gold_build_log y puede reintentarse en un lote
+   posterior. GBIF nunca introduce un species_key que no exista en
+   Wikipedia.
+
+2. GBIF Taxonomy se une por species_key solo si match_type == 'EXACT'.
+   En cualquier otro caso, el estado queda UNMATCHED: los campos
+   taxonómicos (kingdom, phylum, class, rank) quedan nulos, pero la
+   especie sigue siendo válida en Gold gracias a Wikipedia.
+
+3. GBIF Occurrence se agrega (cardinalidad 1:N -> 1:1) en un resumen por
+   especie antes de unirse al documento pivote:
+
+    class GBIFOccurrenceSummary(BaseModel):
+        species_key: str
+        n_occurrences_validas: int
+        paises: list[str]                    # ordenados por frecuencia
+        anio_min: int | None
+        anio_max: int | None
+        iucn_red_list_category: str | None   # moda; empate -> event_date más reciente
+
+   Si n_occurrences_validas == 0, el resumen queda vacío y se registra el
+   estado documentado GBIF_AUGMENTATION_EMPTY (no es un error).
+
+Salida del merge (un registro por species_key):
+
+    species_key, wikipedia_title, extract, sections_text,
+    kingdom, phylum, class_name, rank, taxonomy_status (MATCHED|UNMATCHED),
+    n_occurrences_validas, paises, anio_min, anio_max,
+    iucn_red_list_category, augmentation_status
+
+Este registro alimenta el Warehouse y el texto a vectorizar en Gold.
+
+10. Warehouse (DuckDB, carga idempotente)
+
+Motor: DuckDB embebido (archivo local data/warehouse.duckdb), sin servicio
+de base de datos separado. Esquema simple: una tabla por fuente, una tabla
+de especie fusionada y el catálogo de especies conocidas, cada una con
+UPSERT directo por clave natural (sin capas dim/fact adicionales):
+
+    silver_wikipedia        (PK species_key)
+    silver_gbif_taxonomy    (PK species_key)
+    silver_gbif_occurrences (PK gbif_id)
+    species_merged          (PK species_key)
+    species_catalog         (PK species_key)
+
+species_catalog es el registro real y creciente del universo de especies
+(reemplaza a la lista maestra como fuente de verdad en runtime):
+
+    CREATE TABLE IF NOT EXISTS species_catalog (
+        species_key VARCHAR PRIMARY KEY,
+        scientific_name VARCHAR,
+        wikipedia_title VARCHAR,
+        first_seen_batch_id VARCHAR,
+        first_processed_at TIMESTAMP,
+        last_processed_at TIMESTAMP,
+        origin VARCHAR              -- 'SEED' | 'AD_HOC'
+    );
+
+Una especie se inserta en species_catalog (ON CONFLICT DO UPDATE
+last_processed_at) únicamente cuando el Merge la produce exitosamente
+(Wikipedia válido). Ese es el momento en que la especie queda "agregada a
+la arquitectura": ya es consultable en species_merged y elegible para
+chunking/embeddings en Gold.
+
+Patrón de carga (repetido por tabla):
+
+    INSERT INTO species_merged AS target VALUES (...)
+    ON CONFLICT (species_key) DO UPDATE SET
+        wikipedia_title = EXCLUDED.wikipedia_title,
+        extract = EXCLUDED.extract,
+        ...
+        updated_at = CURRENT_TIMESTAMP;
+
+Evidencia requerida: tabla con filas_antes / filas_despues / filas_nuevas /
+filas_actualizadas para las 5 tablas, reprocesando el mismo lote (semilla o
+especies nuevas) dos veces consecutivas. filas_nuevas debe ser 0 en la
+segunda corrida. Adicionalmente, una corrida de evidencia debe mostrar una
+especie NO perteneciente al lote semilla siendo insertada por primera vez
+en species_catalog con origin = 'AD_HOC'.
+
+11. Canonical Knowledge Model
+
+Entidad: Species
+
+Secciones canónicas: Identity, Taxonomy, Morphology, Distribution, Habitat,
+Behavior, Diet, Reproduction, Conservation, Human Interaction, References,
+Multimedia.
+
+Las secciones se pueblan a partir de extract y sections_text de Wikipedia,
+enriquecidas con los campos de taxonomy_status y augmentation_status del
+merge. Las secciones sin contenido disponible permanecen opcionales (nunca
+se inventan valores).
+
+12. Gold Layer
+
+Tres entidades lógicas, tal como en v1:
+
+Species (Parent) — documento de conocimiento completo por especie, incluye
+todas las secciones canónicas pobladas.
+
+SpeciesChunk (Child) — fragmentos semánticos por sección canónica (Identity,
+Taxonomy, Habitat, etc. — nunca fixed-size puro). Cada chunk se embebe
+individualmente y referencia a su parent vía species_key + chunk_id:
+
+    class SpeciesChunk(BaseModel):
+        chunk_id: str        # f"{species_key}__{section}__{n}"
+        species_key: str     # FK al parent
+        section: str          # nombre de la sección canónica
+        text: str
+
+SpeciesMetadata — filtros estructurados, combinando taxonomía y
+conservación/geografía (alcance completo, según lo decidido):
+
+    class SpeciesMetadata(BaseModel):
+        species_key: str
+        kingdom: str | None
+        phylum: str | None
+        class_name: str | None
+        rank: str | None
+        taxonomy_status: str          # MATCHED | UNMATCHED
+        iucn_red_list_category: str | None
+        paises: list[str]
+        anio_min: int | None
+        anio_max: int | None
+        n_occurrences_validas: int
+        augmentation_status: str      # OK | GBIF_AUGMENTATION_EMPTY
+
+Solo los SpeciesChunk reciben embeddings. Species y SpeciesMetadata no se
+vectorizan.
+
+13. Embeddings e Índice Vectorial
+
+Modelo: BAAI/bge-small-en-v1.5, 384 dimensiones, cargado localmente (sin
+llamadas externas en runtime del pipeline).
+
+Índice: FAISS IndexHNSWFlat, persistido como archivo separado (no dentro de
+DuckDB). Solo indexa SpeciesChunk. Metadata paralela (no vive dentro de
+FAISS): mapeo faiss_row_id -> chunk_id -> species_key, persistido en
+data/gold/faiss_index/metadata.parquet.
+
+El índice se reconstruye completo en cada corrida a partir del estado
+actual de species_merged + gold_chunks: determinista e idempotente por
+construcción (mismo input -> mismo índice).
+
+14. Retrieval Architecture (Parent-Child Híbrido)
+
+Flujo:
+
+    Query en lenguaje natural
+        -> Embed con BAAI/bge-small-en-v1.5
+        -> FAISS IndexHNSWFlat (sobre-muestreo, ej. top_k * 5)
+        -> Deduplicar: mejor score por species_key (un chunk por especie)
+        -> Aggregate by Parent (Species)
+        -> Aplicar filtros estructurados sobre SpeciesMetadata
+           (kingdom/phylum/class/rank, iucn_red_list_category, país en
+            paises, rango anio_min/anio_max)
+        -> Top-K resultados: species_key, wikipedia_title, chunk_text
+           (evidencia), score, metadata relevante
+
+    def search(
+        query: str,
+        top_k: int = 5,
+        filtro_taxonomia: dict | None = None,   # {kingdom, phylum, class_name, rank}
+        filtro_iucn: str | None = None,
+        filtro_pais: str | None = None,
+    ) -> list[dict]: ...
+
+Los filtros se reciben ya estructurados como parámetros explícitos de la
+función (el llamador — humano o notebook — los provee directamente). No
+existe traducción automática de lenguaje natural a filtros: eso corresponde
+al Query Planner, descartado en esta versión (ver sección 15).
+
+15. Fuera de Alcance
+
+- Query Planner (regla determinista o basado en LLM): descartado para esta
+  versión. La búsqueda híbrida recibe los filtros estructurados ya resueltos
+  como parámetros explícitos de search(), sin capa de extracción de
+  filtros desde lenguaje natural.
+- Wikipedia en otros idiomas.
+- Reranking, GraphRAG, extracción de conocimiento vía LLM.
+
+16. Software Architecture
+
+Sin formalismo de Ports & Adapters. Estructura simple por módulos/carpetas,
+alineados 1:1 con las etapas del pipeline:
+
+    src/
+    ├── bronze/        # conectores GBIF + Wikipedia, escritura de JSON crudo
+    ├── silver/        # contratos Pydantic + validación + cuarentena
+    ├── merge/         # augmentation Wikipedia/GBIF, agregación de ocurrencias
+    ├── warehouse/      # UPSERT idempotente en DuckDB
+    ├── gold/          # chunking, embeddings, índice FAISS, search()
+    ├── resolver/      # slugify de species_key, búsqueda/redirect Wikipedia
+    ├── config/        # seed_species.py (lote semilla, no lista de control)
+    └── pipeline.py     # orquestación punta a punta (recibe una lista de
+                         # nombres científicos: lote semilla, ad-hoc, o mezcla)
+
+17. Physical Architecture
+
+Lenguaje: Python 3.11+
+Validación: Pydantic v2
+Warehouse: DuckDB (archivo embebido)
+Bronze: JSON
+Vector Store: FAISS IndexHNSWFlat (archivo separado)
+Embeddings: BAAI/bge-small-en-v1.5 (384 dim)
+Contenedores: Docker Compose
+
+18. Deployment
+
+Dos servicios en docker-compose.yml:
+
+1. pipeline: ejecuta src/pipeline.py de punta a punta (Bronze -> Silver ->
+   Merge -> Warehouse -> Gold) para un lote dado. El lote se pasa como
+   lista de nombres científicos (variable de entorno BATCH_SPECIES o
+   archivo --species-file), y puede ser el lote semilla completo, un
+   subconjunto, especies nuevas, o una mezcla. Monta el volumen ./data
+   para persistir el estado entre corridas (requisito de idempotencia).
+
+2. notebook: servicio Jupyter Lab, monta el mismo volumen ./data y ./src.
+   Se usa para disparar corridas interactivamente, mostrar la tabla de
+   evidencia de idempotencia y ejecutar ejemplos de search().
+
+Imagen base: python:3.11-slim. requirements.txt compartido: pydantic,
+duckdb, sentence-transformers (o equivalente para bge-small-en-v1.5),
+faiss-cpu, requests, jupyterlab, pandas.
+
+19. Testing Strategy y Criterios de Aceptación
+
+Datos:
+- Validación de contrato por fuente (Wikipedia, GBIF Taxonomy, GBIF Occurrence).
+- Detección de registros inválidos con motivo de rechazo explícito.
+
+Pipeline:
+- Idempotencia: reprocesar el mismo lote produce filas_nuevas = 0 en las
+  4 tablas del warehouse.
+- Verificación de merge: al menos un species_key mostrando su documento
+  Wikipedia + resumen GBIF agregado, incluyendo un caso documentado de
+  GBIF_AUGMENTATION_EMPTY.
+
+Retrieval:
+- Al menos 3 llamadas a search() (con y sin filtros) mostrando resultados
+  relevantes y coherentes con el query.
+
+Integración:
+- Ejecución punta a punta de un lote, dos veces consecutivas, sin filas
+  duplicadas.
+
+20. Architecture Decision Records (Resumen)
+
+ADR-001  Entidad de negocio: Species.
+ADR-002  Wikipedia (inglés) es la fuente descriptiva primaria y pivote.
+ADR-003  GBIF provee augmentation vía dos endpoints: Species Match
+         (taxonomía) y Occurrence Search (geo/IUCN).
+ADR-004  Clave natural de especie: species_key, generada dinámicamente
+         vía slugify(scientific_name); no depende de una lista cerrada.
+ADR-004b El universo de especies es abierto: el lote semilla de 18
+         especies es solo un input de demostración, no una lista de
+         control de acceso. El registro real es species_catalog.
+ADR-004c Especies nuevas se identifican solo por nombre científico; el
+         título de Wikipedia se resuelve automáticamente vía búsqueda y
+         redirects, con cuarentena si no hay match confiable.
+ADR-005  Wikipedia en inglés únicamente.
+ADR-006  Matching GBIF Taxonomy estricto: solo matchType == 'EXACT'.
+ADR-007  Wikipedia inválido => especie completa a cuarentena; GBIF
+         inválido => especie retenida como UNMATCHED / GBIF_AUGMENTATION_EMPTY.
+ADR-008  Silver persistido como JSON individual (válidos y rechazados).
+ADR-009  Warehouse simple: una tabla por fuente + UPSERT directo (sin
+         esquema dim/fact).
+ADR-010  Canonical Knowledge Model con 12 secciones fijas, opcionales si
+         faltan datos.
+ADR-011  Chunking Parent-Child, semántico por sección canónica.
+ADR-012  Embeddings locales: BAAI/bge-small-en-v1.5 (384 dim).
+ADR-013  Índice vectorial: FAISS IndexHNSWFlat, archivo separado,
+         reconstruido completo en cada corrida.
+ADR-014  SpeciesMetadata incluye taxonomía + IUCN + países + rango de años.
+ADR-015  Query Planner fuera de alcance; filtros se pasan explícitos a
+         search().
+ADR-016  Sin Ports & Adapters formal; estructura simple por módulos.
+ADR-017  Docker Compose con dos servicios: pipeline y notebook.
+ADR-018  Un lote es cualquier conjunto de especies (nombres científicos)
+         entregado como input a una corrida; el lote semilla dividido en
+         9+9 es solo la convención usada para la demo de reproducibilidad.
+ADR-019  species_catalog (DuckDB) es el registro real y creciente de
+         especies conocidas; se puebla automáticamente en el primer Merge
+         exitoso de cada especie (campo origin: SEED | AD_HOC).
+
+21. Future Evolution
+
+La arquitectura queda preparada, pero no implementada, para:
+- Query Planner (determinista o basado en LLM) que traduzca lenguaje
+  natural a filtros estructurados de SpeciesMetadata.
+- Fuentes científicas adicionales.
+- Proveedores de embeddings alternativos.
+- Bases vectoriales alternativas (ej. DuckDB VSS) si el volumen de datos
+  crece más allá de lo manejable con FAISS local.
+- Reranking y GraphRAG.
+
+End of Specification.
