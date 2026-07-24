@@ -188,8 +188,8 @@ Accomplished:
 - Verified idempotency: second run produces identical counts
 - Verified search() works with and without filters
 
-Tests marked passing: #76-87 (12 Merge tests)
-Current completion status: 91/201 tests passing
+Tests marked passing: 13 Merge tests (all merge tests now passing)
+Current completion status: 92/201 tests passing
 
 Next session:
 - Implement Warehouse layer verification tests (#88-116)
