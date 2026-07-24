@@ -1,4 +1,4 @@
-def slugify(name: str) -> str:
+def slugify(name: str | None) -> str:
     if name is None:
-        raise ValueError("slugify: name cannot be None")
+        return ""
     return name.lower().replace(" ", "_")

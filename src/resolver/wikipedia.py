@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from enum import Enum
 
 import requests
@@ -10,6 +11,19 @@ WIKIPEDIA_REST = "https://en.wikipedia.org/api/rest_v1"
 _HEADERS = {
     "User-Agent": "SharkKnowledgeMedallion/1.0 (educational project; mailto:example@example.com)"
 }
+
+
+def _request_with_retry(url: str, params: dict, max_retries: int = 3) -> requests.Response:
+    for attempt in range(max_retries):
+        resp = requests.get(url, params=params, headers=_HEADERS, timeout=15)
+        if resp.status_code == 429:
+            wait = 2 ** attempt
+            time.sleep(wait)
+            continue
+        resp.raise_for_status()
+        return resp
+    resp.raise_for_status()
+    return resp
 
 
 class ResolutionMethod(str, Enum):
@@ -52,8 +66,7 @@ def _fetch_page_info(title: str) -> tuple[dict | None, bool]:
         "format": "json",
         "redirects": 1,
     }
-    resp = requests.get(WIKIPEDIA_API, params=params, headers=_HEADERS, timeout=15)
-    resp.raise_for_status()
+    resp = _request_with_retry(WIKIPEDIA_API, params)
     data = resp.json()
     pages = data.get("query", {}).get("pages", {})
     was_redirected = False
@@ -104,8 +117,7 @@ def resolve_wikipedia_title(title_or_name: str) -> WikipediaResolution:
         "format": "json",
         "srlimit": 5,
     }
-    search_resp = requests.get(WIKIPEDIA_API, params=search_params, headers=_HEADERS, timeout=15)
-    search_resp.raise_for_status()
+    search_resp = _request_with_retry(WIKIPEDIA_API, search_params)
     search_data = search_resp.json()
     search_results = search_data.get("query", {}).get("search", [])
 

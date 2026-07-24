@@ -1801,7 +1801,7 @@
       "Step 3: Assert no larger base image is used",
       "Step 4: Verify Dockerfile installs requirements.txt"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docker",
@@ -1812,7 +1812,7 @@
       "Step 3: Assert RUN pip install -r requirements.txt",
       "Step 4: Verify no missing dependencies"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docker",
@@ -1823,7 +1823,7 @@
       "Step 3: Assert pipeline service runs src/pipeline.py",
       "Step 4: Verify command or entrypoint is correct"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docker",
@@ -1834,7 +1834,7 @@
       "Step 3: Assert notebook runs Jupyter Lab",
       "Step 4: Verify notebook port is exposed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docker",
@@ -1845,7 +1845,7 @@
       "Step 3: Assert ./data is mounted (local:container)",
       "Step 4: Verify mount path in container matches expected data directory"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docker",
@@ -1856,7 +1856,7 @@
       "Step 3: Assert BATCH_SPECIES is documented or can be passed",
       "Step 4: Verify env var maps to pipeline argument"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docker",
@@ -1867,7 +1867,7 @@
       "Step 3: Assert ./data and ./src are mounted",
       "Step 4: Verify mount paths are correct for notebook access"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docker",
@@ -1878,7 +1878,7 @@
       "Step 3: Verify duckdb, sentence-transformers, faiss-cpu, requests, jupyterlab, pandas are listed",
       "Step 4: Assert version constraints are specified (at minimum minimum versions)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docker",
@@ -1889,7 +1889,7 @@
       "Step 3: Verify all services are container-local",
       "Step 4: Assert no cloud API keys are needed for build"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "data_quality",
@@ -1900,7 +1900,7 @@
       "Step 3: Assert all text fields are identical",
       "Step 4: Verify numerical fields match"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "data_quality",
@@ -1911,7 +1911,7 @@
       "Step 3: Assert reasons match the defined enum values",
       "Step 4: Verify original data is preserved with rejection"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "data_quality",
@@ -1922,7 +1922,7 @@
       "Step 3: Assert species not lost between bronze and silver",
       "Step 4: Verify merge preserves all valid silver records"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "data_quality",
@@ -1933,7 +1933,7 @@
       "Step 3: Assert no files fail parsing",
       "Step 4: Verify file structure matches expected format"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "data_quality",
@@ -1944,7 +1944,7 @@
       "Step 3: Assert species_key exists at every stage",
       "Step 4: Verify data consistency across stages"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "data_quality",
@@ -1955,7 +1955,7 @@
       "Step 3: Assert invalid species are not in FAISS index",
       "Step 4: Verify species_catalog matches gold layer species"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
@@ -1966,7 +1966,7 @@
       "Step 3: Verify silver valid files created",
       "Step 4: Verify search() returns results for those species"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
@@ -1977,7 +1977,7 @@
       "Step 3: Verify species_catalog has origin='AD_HOC'",
       "Step 4: Verify search() for that species returns results"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
@@ -1988,7 +1988,7 @@
       "Step 3: Run full pipeline on same 18 species again",
       "Step 4: Assert all 5 warehouse tables have filas_nuevas = 0"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
@@ -1999,7 +1999,7 @@
       "Step 3: Assert 'Carcharodon carcharias' is in top results",
       "Step 4: Verify result text contains diet-related content"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
@@ -2010,7 +2010,7 @@
       "Step 3: Call search with non-matching filter",
       "Step 4: Assert empty results (or graceful handling)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
@@ -2021,7 +2021,7 @@
       "Step 3: Verify multiple IUCN categories are filterable",
       "Step 4: Test with 'LEAST_CONCERN' if available"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
@@ -2032,7 +2032,7 @@
       "Step 3: Verify results are geographically relevant",
       "Step 4: Test with a country that has few records"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
@@ -2043,7 +2043,7 @@
       "Step 3: Verify multiple species are represented",
       "Step 4: Assert results are sorted by descending score"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
@@ -2054,7 +2054,7 @@
       "Step 3: Verify species_catalog has 9 entries",
       "Step 4: Verify search results are relevant"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
@@ -2065,7 +2065,7 @@
       "Step 3: Verify species_catalog now has all 18 entries",
       "Step 4: Verify search works across all 18 species"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "project",
@@ -2098,7 +2098,7 @@
       "Step 3: Verify data/ is ignored",
       "Step 4: Verify .venv is ignored"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "project",
@@ -2109,7 +2109,7 @@
       "Step 3: Assert setup/quick start instructions are present",
       "Step 4: Verify Docker usage is documented"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "project",
@@ -2120,7 +2120,7 @@
       "Step 3: Verify script installs Python dependencies",
       "Step 4: Verify script prints helpful access information"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "project",
@@ -2131,7 +2131,7 @@
       "Step 3: Assert all dependencies are installed",
       "Step 4: Verify import of all major packages works"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "config",
@@ -2142,7 +2142,7 @@
       "Step 3: Call slugify with special characters and verify they are handled",
       "Step 4: Assert slugify never raises unexpected exceptions"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",

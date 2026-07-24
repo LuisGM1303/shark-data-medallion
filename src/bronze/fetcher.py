@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from datetime import datetime, timezone
 
 import requests
@@ -16,9 +17,20 @@ _HEADERS = {
 }
 
 
+def _request_with_retry(url: str, params: dict | None = None, max_retries: int = 3, timeout: int = 30) -> requests.Response:
+    for attempt in range(max_retries):
+        resp = requests.get(url, params=params, headers=_HEADERS, timeout=timeout)
+        if resp.status_code == 429:
+            wait = 2 ** attempt
+            time.sleep(wait)
+            continue
+        return resp
+    return resp
+
+
 def fetch_gbif_taxonomy(scientific_name: str) -> dict:
-    resp = requests.get(
-        GBIF_SPECIES_MATCH, params={"name": scientific_name}, headers=_HEADERS, timeout=30
+    resp = _request_with_retry(
+        GBIF_SPECIES_MATCH, params={"name": scientific_name}, timeout=30
     )
     return {"status": resp.status_code, "data": resp.json() if resp.ok else resp.text}
 
@@ -29,15 +41,13 @@ def fetch_gbif_occurrences(scientific_name: str) -> dict:
         "hasCoordinate": "true",
         "limit": 50,
     }
-    resp = requests.get(
-        GBIF_OCCURRENCE, params=params, headers=_HEADERS, timeout=30
-    )
+    resp = _request_with_retry(GBIF_OCCURRENCE, params=params, timeout=30)
     return {"status": resp.status_code, "data": resp.json() if resp.ok else resp.text}
 
 
 def fetch_wikipedia_summary(title: str) -> dict:
     url = f"{WIKIPEDIA_REST}/page/summary/{title.replace(' ', '_')}"
-    resp = requests.get(url, headers=_HEADERS, timeout=15)
+    resp = _request_with_retry(url, timeout=15)
     return {"status": resp.status_code, "data": resp.json() if resp.ok else resp.text}
 
 
@@ -49,7 +59,7 @@ def fetch_wikipedia_extracts(title: str) -> dict:
         "titles": title,
         "format": "json",
     }
-    resp = requests.get(WIKIPEDIA_API, params=params, headers=_HEADERS, timeout=15)
+    resp = _request_with_retry(WIKIPEDIA_API, params=params, timeout=15)
     return {"status": resp.status_code, "data": resp.json() if resp.ok else resp.text}
 
 
