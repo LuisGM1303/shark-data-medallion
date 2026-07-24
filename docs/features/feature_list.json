@@ -965,7 +965,7 @@
       "Step 3: Assert it is a valid DuckDB database",
       "Step 4: Verify it can be opened with duckdb.connect()"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -976,7 +976,7 @@
       "Step 3: Assert species_key is PRIMARY KEY",
       "Step 4: Verify it has all WikipediaPage fields as columns"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -987,7 +987,7 @@
       "Step 3: Assert species_key is PRIMARY KEY",
       "Step 4: Verify all GBIFTaxonomy fields are columns"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -998,7 +998,7 @@
       "Step 3: Assert gbif_id is PRIMARY KEY",
       "Step 4: Verify all GBIFOccurrence fields are columns"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1009,7 +1009,7 @@
       "Step 3: Assert species_key is PRIMARY KEY",
       "Step 4: Verify all merge output fields are columns"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1020,7 +1020,7 @@
       "Step 3: Assert species_key is PRIMARY KEY",
       "Step 4: Verify schema matches: scientific_name, wikipedia_title, first_seen_batch_id, first_processed_at, last_processed_at, origin"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1031,7 +1031,7 @@
       "Step 3: Assert origin = 'SEED'",
       "Step 4: Verify all 18 seed species have origin='SEED'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1042,7 +1042,7 @@
       "Step 3: Assert origin = 'AD_HOC'",
       "Step 4: Verify first_seen_batch_id documents the batch"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1053,7 +1053,7 @@
       "Step 3: Assert SET clause includes all relevant columns",
       "Step 4: Verify updated_at is set to CURRENT_TIMESTAMP"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1064,7 +1064,7 @@
       "Step 3: Reprocess the same species after a short delay",
       "Step 4: Verify last_processed_at is updated (newer timestamp)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1075,7 +1075,7 @@
       "Step 3: Query species_merged for that species_key",
       "Step 4: Assert record exists with all merge fields populated"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1086,7 +1086,7 @@
       "Step 3: Assert first_seen_batch_id = 'seed_batch_1'",
       "Step 4: Verify first_processed_at is populated"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1097,7 +1097,7 @@
       "Step 3: Query row count for silver_gbif_taxonomy, silver_gbif_occurrences, species_merged, species_catalog",
       "Step 4: Assert all tables have > 0 rows"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1108,7 +1108,7 @@
       "Step 3: Reprocess same batch",
       "Step 4: Verify species_merged.extract reflects updated content"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1119,7 +1119,7 @@
       "Step 3: Query evidence table for second run",
       "Step 4: Assert filas_nuevas = 0 for all 5 tables"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1130,7 +1130,7 @@
       "Step 3: Assert it has columns: tabla, filas_antes, filas_despues, filas_nuevas, filas_actualizadas",
       "Step 4: Verify data types are integer for counts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
@@ -1141,7 +1141,7 @@
       "Step 3: Assert filas_nuevas > 0 for the new species",
       "Step 4: Verify species_catalog has origin='AD_HOC'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -2186,7 +2186,7 @@
       "Step 3: Verify species_catalog has all 10 species",
       "Step 4: Assert no records from Batch A are lost or corrupted"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",

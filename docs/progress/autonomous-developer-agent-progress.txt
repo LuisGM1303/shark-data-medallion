@@ -191,7 +191,29 @@ Accomplished:
 Tests marked passing: 13 Merge tests (all merge tests now passing)
 Current completion status: 92/201 tests passing
 
+Session 7 - Warehouse Layer Verification Agent
+================================
+Date: 2026-07-24
+
+Accomplished:
+- Created tests/test_warehouse.py with 18 automated Warehouse layer verification tests:
+  * DuckDB file creation and schema tests (#88-93)
+  * species_catalog SEED and AD_HOC origin tests (#94-95)
+  * UPSERT pattern update and last_processed_at tests (#96-97)
+  * First-time species_merged and catalog tests (#98-99)
+  * All 5 tables populated verification (#100)
+  * UPSERT update of existing records (#101)
+  * Idempotency: rows_new = 0 on re-run (#102)
+  * Evidence format with rows_before/rows_after/rows_new/rows_updated (#103)
+  * AD_HOC species evidence (#104)
+  * Sequential batch load without data corruption (#199)
+- Fixed DuckDB DESCRIBE column indexing (r[0] instead of r[1])
+- Verified existing bronze, silver, merge tests still pass
+
+Tests marked passing: #88-104, #199 (18 Warehouse tests)
+Current completion status: 110/201 tests passing
+
 Next session:
-- Implement Warehouse layer verification tests (#88-116)
-- Implement Gold layer verification tests
-- Run full seed batch idempotency with evidence table
+- Implement Gold layer verification tests (#105-126, #200)
+- Implement Embeddings and Retrieval tests
+- Implement Pipeline integration tests
