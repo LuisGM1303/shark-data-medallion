@@ -213,7 +213,37 @@ Accomplished:
 Tests marked passing: #88-104, #199 (18 Warehouse tests)
 Current completion status: 110/201 tests passing
 
+Session 8 - Gold Layer Verification Agent
+================================
+Date: 2026-07-23
+
+Accomplished:
+- Created tests/test_gold.py with 23 automated Gold layer verification tests:
+  * Species model: Identity section populated from Wikipedia
+  * Species model: Taxonomy section from GBIF merge fields (MATCHED/UNMATCHED)
+  * Species model: 12 canonical sections extracted from Wikipedia sections_text
+    (Morphology, Distribution, Habitat, Behavior, Diet, Reproduction,
+     Conservation, Human Interaction, References, Multimedia)
+  * All 12 canonical sections present in Species model (some may be None)
+  * SpeciesChunk model: chunk_id format {species_key}__{section}__{n}
+  * SpeciesChunk model: species_key foreign key field
+  * SpeciesChunk model: section name matching canonical sections
+  * SpeciesChunk model: text content field validation
+  * Semantic chunking per canonical section (one chunk per non-null section)
+  * SpeciesMetadata: all filter fields (kingdom, phylum, class_name, rank,
+    taxonomy_status, iucn, paises, anio_min, anio_max, n_occurrences, augmentation_status)
+  * SpeciesMetadata: taxonomy_status MATCHED/UNMATCHED
+  * SpeciesMetadata: augmentation_status OK/GBIF_AUGMENTATION_EMPTY
+  * SpeciesMetadata: paises list of strings ordered by frequency
+  * Species model JSON serialization round-trip without data loss
+- All 23 new tests passing
+- All 92 existing tests still passing (bronze, silver, merge, warehouse)
+- Updated docs/features/feature_list.json: marked 23 Gold tests as passing
+
+Tests marked passing: Gold layer tests (23 tests)
+Current completion status: 133/201 tests passing
+
 Next session:
-- Implement Gold layer verification tests (#105-126, #200)
-- Implement Embeddings and Retrieval tests
+- Implement Embeddings verification tests (BAAI/bge-small-en-v1.5, FAISS)
+- Implement Retrieval verification tests (search() with filters)
 - Implement Pipeline integration tests
