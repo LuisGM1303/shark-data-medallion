@@ -237,6 +237,12 @@ def main():
     elif args.species_file:
         with open(args.species_file) as f:
             species = [line.strip() for line in f if line.strip()]
+    elif "BATCH_SPECIES" in os.environ:
+        raw = os.environ["BATCH_SPECIES"].strip()
+        if raw.startswith("["):
+            species = json.loads(raw)
+        else:
+            species = [s.strip() for s in raw.split(",") if s.strip()]
     else:
         parser.print_help()
         sys.exit(1)

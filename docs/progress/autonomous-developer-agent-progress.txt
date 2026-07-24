@@ -293,8 +293,37 @@ Accomplished:
 Tests marked passing: Retrieval layer tests (15 tests)
 Current completion status: 158/201 tests passing
 
+Session 11 - Pipeline Integration Test Agent
+================================
+Date: 2026-07-24
+
+Accomplished:
+- Created tests/test_pipeline.py with 13 automated Pipeline integration tests:
+  * Pipeline module importable (#150)
+  * Pipeline accepts list of scientific names (#151)
+  * Pipeline processes seed batch end-to-end (#152)
+  * Pipeline processes ad-hoc species not in seed list (#153)
+  * Pipeline processes mixed batch (seed + ad-hoc) (#154)
+  * Pipeline runs all stages: bronze->silver->merge->warehouse->gold (#155)
+  * Pipeline idempotency: rows_new = 0 on second run (#156)
+  * Pipeline handles species with no Wikipedia match (quarantined, not fatal) (#157)
+  * Pipeline handles GBIF API errors without failing (#158)
+  * Pipeline produces summary report with all required keys (#159)
+  * Pipeline accepts BATCH_SPECIES environment variable (#160)
+  * Pipeline accepts --species-file argument for batch definition (#161)
+  * Pipeline handles empty batch gracefully (#162)
+- Added BATCH_SPECIES env var support to pipeline.py main()
+- All 13 new pipeline tests passing
+- All 140 existing tests still passing (bronze, silver, merge, warehouse, gold, embeddings, retrieval)
+- Updated docs/features/feature_list.json: marked 13 Pipeline tests as passing
+
+Tests marked passing: Pipeline integration tests (13 tests)
+Current completion status: 171/201 tests passing
+
+Issues fixed:
+- DuckDB lock conflict during concurrent test runs (transient - re-run resolved it)
+
 Next session:
-- Implement Pipeline integration tests (pipeline.py import, CLI arguments, batch processing, idempotency, error handling)
-- Implement Docker verification tests
-- Implement Data Quality verification tests
-- Implement Integration end-to-end tests
+- Implement Docker verification tests (tests #163-171)
+- Implement Data Quality verification tests (tests #172-177)
+- Implement Integration end-to-end tests (tests #178-187, #190-194)
