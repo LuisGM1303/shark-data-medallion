@@ -161,7 +161,37 @@ Issues fixed:
 - GBIFOccurrence model: added ge/le constraints for lat/lon fields
 - Validator: distinguish 404 (PAGE_NOT_FOUND) from other HTTP errors (HTTP_ERROR)
 
+Session 6 - Merge Layer Verification Agent
+================================
+Date: 2026-07-24
+
+Accomplished:
+- Created tests/test_merge.py with 12 automated Merge layer verification tests:
+  * Merge requires Wikipedia as mandatory pivot (None Wikipedia returns None)
+  * Species without valid Wikipedia are not added to species_catalog
+  * GBIF never introduces a species_key that doesn't exist in Wikipedia
+  * GBIF Taxonomy joined by species_key only when match_type is EXACT
+  * Non-EXACT GBIF Taxonomy results in UNMATCHED status (species still valid via Wikipedia)
+  * GBIF Occurrence aggregated 1:N -> 1:1 summary per species
+  * GBIFOccurrenceSummary includes n_occurrences_validas count
+  * GBIFOccurrenceSummary paises ordered by frequency descending
+  * GBIFOccurrenceSummary anio_min and anio_max from occurrence date range
+  * GBIFOccurrenceSummary iucn_red_list_category uses mode (most frequent)
+  * Zero valid occurrences results in GBIF_AUGMENTATION_EMPTY (not an error)
+  * Merge output record contains all required fields (species_key, wikipedia_title, extract, sections_text, kingdom, phylum, class_name, rank, taxonomy_status, n_occurrences_validas, paises, anio_min, anio_max, iucn_red_list_category, augmentation_status)
+- Ran full pipeline with all 18 seed species end-to-end:
+  * Bronze: 54 JSON files created (18 per source)
+  * Silver: 18 Wikipedia valid, 18 GBIF taxonomy valid, 484 GBIF occurrences valid, 416 rejected
+  * Merge: 18 species merged
+  * Warehouse: 18 rows in each of 5 tables
+  * Gold: 18 species, 149 chunks, 149 FAISS vectors
+- Verified idempotency: second run produces identical counts
+- Verified search() works with and without filters
+
+Tests marked passing: #76-87 (12 Merge tests)
+Current completion status: 91/201 tests passing
+
 Next session:
-- Verify full idempotency evidence with rows_new counts
-- Implement Merge layer verification tests (#76-87)
-- Run full seed batch (18 species) through pipeline
+- Implement Warehouse layer verification tests (#88-116)
+- Implement Gold layer verification tests
+- Run full seed batch idempotency with evidence table

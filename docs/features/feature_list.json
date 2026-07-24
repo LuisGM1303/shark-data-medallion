@@ -833,7 +833,7 @@
       "Step 3: Run merge trying to introduce species without Wikipedia",
       "Step 4: Assert species is not added to species_catalog"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -844,7 +844,7 @@
       "Step 3: Assert warning is documented in gold_build_log",
       "Step 4: Verify species can be retried in a future batch"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -855,7 +855,7 @@
       "Step 3: Assert species_catalog is unchanged",
       "Step 4: Verify pipeline continues processing other species"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -866,7 +866,7 @@
       "Step 3: Assert taxonomy_status = 'MATCHED'",
       "Step 4: Verify species_key is used as join key"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -877,7 +877,7 @@
       "Step 3: Assert taxonomy_status = 'UNMATCHED'",
       "Step 4: Verify species is still valid and added to catalog via Wikipedia"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -888,7 +888,7 @@
       "Step 3: Assert n_occurrences_validas matches count of valid occurrences",
       "Step 4: Verify paises contains unique country names ordered by frequency"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -899,7 +899,7 @@
       "Step 3: Process species with 0 valid occurrences",
       "Step 4: Verify n_occurrences_validas = 0 and augmentation empty"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -910,7 +910,7 @@
       "Step 3: Verify no duplicate country names in list",
       "Step 4: Verify counts are consistent with raw occurrence data"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -921,7 +921,7 @@
       "Step 3: Verify anio_max = 2020",
       "Step 4: Process species with no dates and verify anio_min/anio_max are None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -932,7 +932,7 @@
       "Step 3: For tie, verify most recent event_date determines winner",
       "Step 4: Process with no IUCN data and verify category is None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -943,7 +943,7 @@
       "Step 3: Assert species is still valid via Wikipedia",
       "Step 4: Verify occurrence summary has default empty values"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -954,7 +954,7 @@
       "Step 3: Verify output has: kingdom, phylum, class_name, rank, taxonomy_status",
       "Step 4: Verify output has: n_occurrences_validas, paises, anio_min, anio_max, iucn_red_list_category, augmentation_status"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",
