@@ -1504,7 +1504,7 @@
       "Step 3: Assert function returns a list",
       "Step 4: Verify list is iterable"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1515,7 +1515,7 @@
       "Step 3: Assert embedding dimension is 384",
       "Step 4: Verify FAISS search uses query embedding"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1526,7 +1526,7 @@
       "Step 3: Assert final results are <= top_k after dedup",
       "Step 4: Verify oversampling factor is documented"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1537,7 +1537,7 @@
       "Step 3: Assert the chunk with highest score is kept",
       "Step 4: Verify lower-scoring chunks from same species are removed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1548,7 +1548,7 @@
       "Step 3: Assert results include full species context",
       "Step 4: Verify chunk_text provides evidence"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1559,7 +1559,7 @@
       "Step 3: Assert all returned species have matching taxonomy",
       "Step 4: Test with phylum filter"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1570,7 +1570,7 @@
       "Step 3: Assert all returned species have matching IUCN status",
       "Step 4: Test with non-existent IUCN category (empty results expected)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1581,7 +1581,7 @@
       "Step 3: Assert filter works case-insensitively or as stored",
       "Step 4: Test with country that has no matches"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1592,7 +1592,7 @@
       "Step 3: Assert all required keys present in each result",
       "Step 4: Verify score is a float between 0 and 1 (or cosine similarity)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1603,7 +1603,7 @@
       "Step 3: Assert multiple distinct species in results",
       "Step 4: Verify results are sorted by relevance (highest score first)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1614,7 +1614,7 @@
       "Step 3: Assert filter intersection works correctly",
       "Step 4: Compare with single-filter results to confirm narrowing"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1625,7 +1625,7 @@
       "Step 3: Call search with impossible filter combination",
       "Step 4: Assert empty list (not error)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1636,7 +1636,7 @@
       "Step 3: Verify all data loaded from local DuckDB and FAISS files",
       "Step 4: Assert embeddings generated locally"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
@@ -1647,7 +1647,7 @@
       "Step 3: Assert behavior is defined (return empty results or all results)",
       "Step 4: Verify function handles empty string consistently"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "pipeline",
@@ -2208,6 +2208,6 @@
       "Step 3: Assert empty list is returned",
       "Step 4: Verify no errors or crashes"
     ],
-    "passes": false
+    "passes": true
   }
 ]

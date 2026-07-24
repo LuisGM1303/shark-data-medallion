@@ -266,7 +266,35 @@ Accomplished:
 Tests marked passing: Embeddings layer tests (10 tests)
 Current completion status: 143/201 tests passing
 
+Session 10 - Retrieval Layer Verification Agent
+================================
+Date: 2026-07-24
+
+Accomplished:
+- Created tests/test_retrieval.py with 15 automated Retrieval verification tests:
+  * search() function exists and accepts query string parameter
+  * search() query is embedded using BAAI/bge-small-en-v1.5
+  * FAISS search uses oversampling (top_k * 5) for better recall
+  * Results are deduplicated by species_key keeping best scoring chunk
+  * Results aggregated by parent Species document
+  * search() accepts taxonomy, IUCN, and country filter parameters
+  * search() returns list of dicts with correct fields (species_key, wikipedia_title, chunk_text, score, metadata)
+  * search() without filters returns diverse results across species
+  * search() with multiple filters applies intersection (AND) of filters
+  * search() returns empty list when no results match filters
+  * search() is pure Python with no external API calls at runtime
+  * search() handles empty query gracefully
+  * search() returns empty list when FAISS index is empty (no species loaded)
+- Rebuilt FAISS index with 149 chunks across 18 species from warehouse data
+- All 15 new tests passing
+- All 125 existing tests still passing (bronze, silver, merge, warehouse, gold, embeddings)
+- Updated docs/features/feature_list.json: marked 15 Retrieval tests as passing
+
+Tests marked passing: Retrieval layer tests (15 tests)
+Current completion status: 158/201 tests passing
+
 Next session:
-- Implement Retrieval verification tests (search() with filters)
-- Implement Pipeline integration tests
+- Implement Pipeline integration tests (pipeline.py import, CLI arguments, batch processing, idempotency, error handling)
 - Implement Docker verification tests
+- Implement Data Quality verification tests
+- Implement Integration end-to-end tests
