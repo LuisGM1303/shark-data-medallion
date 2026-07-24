@@ -127,7 +127,41 @@ Accomplished:
 Tests marked passing: #13-33, #196 (22 Bronze tests)
 Current completion status: 36/201 tests passing
 
+Session 5 - Silver Layer Verification Agent
+================================
+Date: 2026-07-23
+
+Accomplished:
+- Verified all 42 Silver layer tests against Pydantic models and validators:
+  * WikipediaPage model: species_key, title, resolved_via, extract, sections_text, page_url, is_disambiguation
+  * Wikipedia rejection reasons: PAGE_NOT_FOUND, EXTRACT_TOO_SHORT, DISAMBIGUATION_PAGE, HTTP_ERROR, MISSING_SECTIONS_TEXT
+  * Wikipedia valid/rejected persistence to individual JSON files
+  * GBIFTaxonomy model: usage_key, scientific_name, canonical_name, rank, match_type, confidence, optional fields
+  * GBIF Taxonomy rejection reasons: MATCH_TYPE_NOT_EXACT, NO_MATCH_RETURNED, HTTP_ERROR
+  * GBIF Taxonomy valid/rejected persistence
+  * GBIFOccurrence model: gbif_id, lat/lon range validation, basis_of_record, optional fields
+  * GBIF Occurrence rejection reasons: MISSING_COORDINATES, COORDINATES_OUT_OF_RANGE, MISSING_GBIF_ID, INVALID_EVENT_DATE, MISSING_BASIS_OF_RECORD
+  * GBIF Occurrence valid/rejected persistence
+  * Silver directory structure for all sources
+  * page_url format contains en.wikipedia.org
+- Fixed Pydantic models:
+  * Added Field(min_length=1) to WikipediaPage.title
+  * Added Field(min_length=50) to WikipediaPage.extract
+  * Added Field(ge=-90, le=90) to GBIFOccurrence.decimal_latitude
+  * Added Field(ge=-180, le=180) to GBIFOccurrence.decimal_longitude
+- Fixed validator: 404 status is now classified as PAGE_NOT_FOUND (not HTTP_ERROR)
+- Created tests/test_silver.py with 42 automated verification tests
+- Verified pipeline still works end-to-end with 2 species after fixes
+
+Tests marked passing: #34-75, #197 (43 Silver tests)
+Current completion status: 79/201 tests passing
+
+Issues fixed:
+- WikipediaPage model: added min_length constraints for title and extract
+- GBIFOccurrence model: added ge/le constraints for lat/lon fields
+- Validator: distinguish 404 (PAGE_NOT_FOUND) from other HTTP errors (HTTP_ERROR)
+
 Next session:
 - Verify full idempotency evidence with rows_new counts
-- Implement Silver layer validation tests
+- Implement Merge layer verification tests (#76-87)
 - Run full seed batch (18 species) through pipeline

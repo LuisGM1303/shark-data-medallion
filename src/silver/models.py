@@ -8,9 +8,9 @@ from pydantic import BaseModel, Field
 
 class WikipediaPage(BaseModel):
     species_key: str
-    title: str
+    title: str = Field(min_length=1)
     resolved_via: str
-    extract: str
+    extract: str = Field(min_length=50)
     sections_text: str
     page_url: str
     is_disambiguation: bool = False
@@ -32,8 +32,8 @@ class GBIFTaxonomy(BaseModel):
 class GBIFOccurrence(BaseModel):
     gbif_id: int
     species_key: str
-    decimal_latitude: float
-    decimal_longitude: float
+    decimal_latitude: float = Field(ge=-90, le=90)
+    decimal_longitude: float = Field(ge=-180, le=180)
     country: Optional[str] = None
     event_date: Optional[datetime] = None
     basis_of_record: str

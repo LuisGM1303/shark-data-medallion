@@ -50,10 +50,12 @@ def validate_wikipedia(
     summary_data = summary.get("data") if isinstance(summary, dict) else None
     extracts_data_resp = extracts_data.get("data") if isinstance(extracts_data, dict) else None
 
-    if isinstance(summary, dict) and summary.get("status", 200) != 200:
+    status = summary.get("status", 200) if isinstance(summary, dict) else 200
+    if status != 200:
+        reason = RejectionReason.PAGE_NOT_FOUND if status == 404 else RejectionReason.HTTP_ERROR
         _save_rejected(
-            "wikipedia", batch_id, species_key, RejectionReason.HTTP_ERROR,
-            {"http_status": summary.get("status"), "species_key": species_key},
+            "wikipedia", batch_id, species_key, reason,
+            {"http_status": status, "species_key": species_key},
         )
         return None
 

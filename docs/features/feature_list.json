@@ -371,7 +371,7 @@
       "Step 3: Create WikipediaPage without species_key",
       "Step 4: Assert validation error is raised"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -382,7 +382,7 @@
       "Step 3: Assert validation error for empty title",
       "Step 4: Verify title is stored correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -393,7 +393,7 @@
       "Step 3: Create WikipediaPage with resolved_via='REDIRECT'",
       "Step 4: Verify all three are accepted"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -404,7 +404,7 @@
       "Step 3: Create WikipediaPage with extract >= 50 characters",
       "Step 4: Verify passes validation"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -415,7 +415,7 @@
       "Step 3: Assert MISSING_SECTIONS_TEXT rejection",
       "Step 4: Verify sections with content pass validation"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -426,7 +426,7 @@
       "Step 3: Create WikipediaPage with invalid URL",
       "Step 4: Assert validation error"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -437,7 +437,7 @@
       "Step 3: Create WikipediaPage with is_disambiguation=True",
       "Step 4: Verify boolean field is stored correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -448,7 +448,7 @@
       "Step 3: Assert rejected file is written with batch_id prefix",
       "Step 4: Verify rejected file contains enough context to diagnose"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -459,7 +459,7 @@
       "Step 3: Assert rejected file is written with details",
       "Step 4: Verify multiple candidate titles are documented"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -470,7 +470,7 @@
       "Step 3: Assert extract length is documented",
       "Step 4: Verify invalid file is written to rejected/"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -481,7 +481,7 @@
       "Step 3: Assert disambiguation flag is documented",
       "Step 4: Verify rejected file includes original page metadata"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -492,7 +492,7 @@
       "Step 3: Assert HTTP status code is documented",
       "Step 4: Verify rejected file is written"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -503,7 +503,7 @@
       "Step 3: Assert rejected file is written",
       "Step 4: Verify context about missing sections is included"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -514,7 +514,7 @@
       "Step 3: Assert file is valid JSON matching WikipediaPage schema",
       "Step 4: Verify no extra fields are present"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -525,7 +525,7 @@
       "Step 3: Assert file contains rejection_reason field",
       "Step 4: Verify file contains original data context"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -536,7 +536,7 @@
       "Step 3: Assert validation error for non-integer",
       "Step 4: Verify usage_key is stored correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -547,7 +547,7 @@
       "Step 3: Create with empty scientific_name",
       "Step 4: Assert validation error"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -558,7 +558,7 @@
       "Step 3: Assert rank is stored as string",
       "Step 4: Verify rank can be None if not provided"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -569,7 +569,7 @@
       "Step 3: Verify both are valid Pydantic models",
       "Step 4: Assert match_type is stored as string"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -580,7 +580,7 @@
       "Step 3: Create with negative confidence",
       "Step 4: Assert validation error or behavior is defined"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -591,7 +591,7 @@
       "Step 3: Create without these optional fields",
       "Step 4: Verify defaults to None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -602,7 +602,7 @@
       "Step 3: Assert species is marked UNMATCHED",
       "Step 4: Verify rejected file is written"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -613,7 +613,7 @@
       "Step 3: Assert rejected file is written",
       "Step 4: Verify context is documented"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -624,7 +624,7 @@
       "Step 3: Assert HTTP status code is documented",
       "Step 4: Verify rejected file is written"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -635,7 +635,7 @@
       "Step 3: Assert file matches GBIFTaxonomy schema",
       "Step 4: Verify no extra fields"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -646,7 +646,7 @@
       "Step 3: Assert file contains rejection_reason",
       "Step 4: Verify original data context"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -657,7 +657,7 @@
       "Step 3: Assert MISSING_GBIF_ID rejection",
       "Step 4: Create with non-int gbif_id and assert error"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -668,7 +668,7 @@
       "Step 3: Create with decimal_latitude=100.0",
       "Step 4: Assert COORDINATES_OUT_OF_RANGE"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -679,7 +679,7 @@
       "Step 3: Create with decimal_longitude=200.0",
       "Step 4: Assert COORDINATES_OUT_OF_RANGE"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -690,7 +690,7 @@
       "Step 3: Create without basis_of_record",
       "Step 4: Assert MISSING_BASIS_OF_RECORD"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -701,7 +701,7 @@
       "Step 3: Create without country",
       "Step 4: Verify it defaults to None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -712,7 +712,7 @@
       "Step 3: Create with invalid date string",
       "Step 4: Assert INVALID_EVENT_DATE"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -723,7 +723,7 @@
       "Step 3: Create without it",
       "Step 4: Verify defaults to None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -734,7 +734,7 @@
       "Step 3: Create without it",
       "Step 4: Verify defaults to None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -745,7 +745,7 @@
       "Step 3: Assert rejected file is written",
       "Step 4: Verify occurrence context is preserved"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -756,7 +756,7 @@
       "Step 3: Assert rejected file is written",
       "Step 4: Process occurrence with decimal_longitude=200.0 and verify same"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -767,7 +767,7 @@
       "Step 3: Assert rejected file is written",
       "Step 4: Verify occurrence data is preserved"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -778,7 +778,7 @@
       "Step 3: Assert rejected file is written",
       "Step 4: Process occurrence with null eventDate (should be allowed)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -789,7 +789,7 @@
       "Step 3: Assert rejected file is written",
       "Step 4: Verify original fields preserved"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -800,7 +800,7 @@
       "Step 3: Assert files match GBIFOccurrence schema",
       "Step 4: Verify no extra fields"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -811,7 +811,7 @@
       "Step 3: Assert file contains rejection_reason",
       "Step 4: Verify context preserved"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -822,7 +822,7 @@
       "Step 3: Check data/silver/gbif_taxonomy/valid/ and rejected/ exist",
       "Step 4: Check data/silver/gbif_occurrence/valid/ and rejected/ exist"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
@@ -2164,7 +2164,7 @@
       "Step 3: Create WikipediaPage with non-Wikipedia URL",
       "Step 4: Assert validation error for invalid URL domain"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "merge",
