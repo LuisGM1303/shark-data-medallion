@@ -2175,7 +2175,7 @@
       "Step 3: Verify augmentation_status = 'GBIF_AUGMENTATION_EMPTY'",
       "Step 4: Assert species is still valid in Gold via Wikipedia alone"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "warehouse",

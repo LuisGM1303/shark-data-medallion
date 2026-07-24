@@ -280,6 +280,25 @@ def test_merge_output_fields():
     assert result_none.augmentation_status == "GBIF_AUGMENTATION_EMPTY"
 
 
+@test("Merge handles species where both GBIF taxonomy AND occurrences are absent")
+def test_merge_no_gbif_at_all():
+    result = merge_species(SAMPLE_WIKIPEDIA, None, [])
+    assert result is not None
+    assert result.species_key == "carcharodon_carcharias"
+    assert result.wikipedia_title == "Great white shark"
+    assert result.taxonomy_status == "UNMATCHED"
+    assert result.kingdom is None
+    assert result.phylum is None
+    assert result.class_name is None
+    assert result.rank is None
+    assert result.augmentation_status == "GBIF_AUGMENTATION_EMPTY"
+    assert result.n_occurrences_validas == 0
+    assert result.paises == []
+    assert result.anio_min is None
+    assert result.anio_max is None
+    assert result.iucn_red_list_category is None
+
+
 if __name__ == "__main__":
     n = len([k for k in dir() if k.startswith("test_") and callable(locals()[k])])
     print(f"Running {n} Merge layer tests...\n")
