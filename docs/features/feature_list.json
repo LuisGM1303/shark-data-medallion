@@ -1394,7 +1394,7 @@
       "Step 3: Verify model loads from local cache",
       "Step 4: Assert no external API calls are made"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "embeddings",
@@ -1405,7 +1405,7 @@
       "Step 3: Assert embedding has 384 dimensions",
       "Step 4: Verify embedding is a numpy array of floats"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "embeddings",
@@ -1416,7 +1416,7 @@
       "Step 3: Assert Species documents are not embedded",
       "Step 4: Assert SpeciesMetadata documents are not embedded"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "embeddings",
@@ -1427,7 +1427,7 @@
       "Step 3: Add embeddings to index",
       "Step 4: Verify index.ntotal() == number of chunks"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "embeddings",
@@ -1438,7 +1438,7 @@
       "Step 3: Assert index can be loaded back from file",
       "Step 4: Verify DuckDB database does not contain the index"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "embeddings",
@@ -1449,7 +1449,7 @@
       "Step 3: Assert row count matches total chunks",
       "Step 4: Verify faiss_row_id values are sequential starting from 0"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "embeddings",
@@ -1460,7 +1460,7 @@
       "Step 3: Re-run gold layer",
       "Step 4: Verify index.ntotal() reflects new chunk count"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "embeddings",
@@ -1471,7 +1471,7 @@
       "Step 3: Search same query in both indices",
       "Step 4: Assert results are identical (same scores and order)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "embeddings",
@@ -1482,7 +1482,7 @@
       "Step 3: Verify model runs on CPU (or available hardware)",
       "Step 4: Assert embedding is deterministic"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "embeddings",
@@ -1493,7 +1493,7 @@
       "Step 3: Assert index.faiss file exists in directory",
       "Step 4: Assert metadata.parquet exists in directory"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",

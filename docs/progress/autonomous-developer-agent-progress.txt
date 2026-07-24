@@ -243,7 +243,30 @@ Accomplished:
 Tests marked passing: Gold layer tests (23 tests)
 Current completion status: 133/201 tests passing
 
+Session 9 - Embeddings Layer Verification Agent
+================================
+Date: 2026-07-23
+
+Accomplished:
+- Created tests/test_embeddings.py with 10 automated Embeddings layer verification tests:
+  * BAAI/bge-small-en-v1.5 model loads successfully without internet
+  * Embedding dimension is 384 (matching bge-small-en-v1.5)
+  * Only SpeciesChunks are embedded; Species and SpeciesMetadata skipped
+  * FAISS IndexHNSWFlat index is created successfully
+  * FAISS index is persisted as a standalone file (not inside DuckDB)
+  * Metadata parquet maps faiss_row_id -> chunk_id -> species_key
+  * FAISS index is fully rebuilt from scratch on each pipeline run
+  * Deterministic index: same input produces same index
+  * Embeddings do not make external API calls (fully local inference)
+  * FAISS index directory structure is created automatically
+- All 10 new tests passing
+- All 115 existing tests still passing (bronze, silver, merge, warehouse, gold)
+- Updated docs/features/feature_list.json: marked 10 Embeddings tests as passing
+
+Tests marked passing: Embeddings layer tests (10 tests)
+Current completion status: 143/201 tests passing
+
 Next session:
-- Implement Embeddings verification tests (BAAI/bge-small-en-v1.5, FAISS)
 - Implement Retrieval verification tests (search() with filters)
 - Implement Pipeline integration tests
+- Implement Docker verification tests
