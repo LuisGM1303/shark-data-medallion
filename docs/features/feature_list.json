@@ -1152,7 +1152,7 @@
       "Step 3: Assert Identity contains species_key and scientific_name",
       "Step 4: Verify no data is invented"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1163,7 +1163,7 @@
       "Step 3: Build Species with UNMATCHED taxonomy",
       "Step 4: Verify Taxonomy section fields are null/None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1174,7 +1174,7 @@
       "Step 3: If found, populate Morphology section",
       "Step 4: If not found, Morphology section is None (optional)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1185,7 +1185,7 @@
       "Step 3: If found, populate Distribution section",
       "Step 4: If not found, Distribution section is None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1196,7 +1196,7 @@
       "Step 3: If found, populate Habitat section",
       "Step 4: Verify section content is non-empty"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1207,7 +1207,7 @@
       "Step 3: If found, populate Behavior section",
       "Step 4: If not found, section is None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1218,7 +1218,7 @@
       "Step 3: If found, populate Diet section",
       "Step 4: If not found, section is None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1229,7 +1229,7 @@
       "Step 3: If found, populate Reproduction section",
       "Step 4: If not found, section is None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1240,7 +1240,7 @@
       "Step 3: If found, populate Conservation section",
       "Step 4: If not found, section is None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1251,7 +1251,7 @@
       "Step 3: If found, populate Human Interaction section",
       "Step 4: If not found, section is None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1262,7 +1262,7 @@
       "Step 3: If found, populate References section",
       "Step 4: If not found, section is None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1273,7 +1273,7 @@
       "Step 3: If found, populate Multimedia section",
       "Step 4: If not found, section is None"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1284,7 +1284,7 @@
       "Step 3: Assert each section is either populated string or None",
       "Step 4: Verify no extra sections are invented"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1295,7 +1295,7 @@
       "Step 3: Test with multiple chunks from same section",
       "Step 4: Verify chunk numbering increments correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1306,7 +1306,7 @@
       "Step 3: Verify species_key references a Species model",
       "Step 4: Assert species_key is a string"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1317,7 +1317,7 @@
       "Step 3: Assert section matches one of the 12 canonical section names",
       "Step 4: Test with invalid section name (assert validation error)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1328,7 +1328,7 @@
       "Step 3: Create SpeciesChunk with empty text",
       "Step 4: Assert validation error for empty text"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1339,7 +1339,7 @@
       "Step 3: Assert chunks correspond to semantic section boundaries",
       "Step 4: Verify no fixed-size splitting across sections"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1350,7 +1350,7 @@
       "Step 3: Verify iucn_red_list_category, paises, anio_min, anio_max, n_occurrences_validas, augmentation_status",
       "Step 4: Assert all fields are present"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1361,7 +1361,7 @@
       "Step 3: Create SpeciesMetadata for species with non-EXACT GBIF match",
       "Step 4: Assert taxonomy_status = 'UNMATCHED'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1372,7 +1372,7 @@
       "Step 3: Create SpeciesMetadata with zero valid occurrences",
       "Step 4: Assert augmentation_status = 'GBIF_AUGMENTATION_EMPTY'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "gold",
@@ -1383,7 +1383,7 @@
       "Step 3: Verify no duplicate values",
       "Step 4: Assert each element is a string"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "embeddings",
@@ -2197,7 +2197,7 @@
       "Step 3: Deserialize back to Species",
       "Step 4: Assert all fields match original"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "retrieval",
