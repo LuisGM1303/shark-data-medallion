@@ -93,10 +93,41 @@ Accomplished:
 Tests marked passing: #8-12 (resolver Wikipedia resolution edge cases)
 Current completion status: 14/201 tests passing
 
-Next session:
-- Mark additional tests as passing after full seed batch (18 species) verification
-- Implement Bronze layer tests (GBIF/Wikipedia API fetching)
-- Verify full idempotency evidence with rows_new counts
-- Add Silver layer validation tests
+Session 4 - Bronze Layer Verification Agent
+================================
+Date: 2026-07-23
 
-Commit: Enhanced Wikipedia title resolution with redirect/ambiguous/PAGE_NOT_FOUND/disambiguation detection
+Accomplished:
+- Verified all 22 Bronze layer tests against live APIs (GBIF Species Match, GBIF Occurrence, Wikipedia):
+  * GBIF Species Match fetches taxonomy data correctly
+  * GBIF Species Match handles non-EXACT matches gracefully
+  * GBIF Species Match persists raw JSON with metadata envelope
+  * GBIF Species Match file naming includes batch number and ISO timestamp
+  * GBIF Species Match persists HTTP errors without transformation
+  * GBIF Occurrence Search fetches occurrence records with correct parameters
+  * GBIF Occurrence Search limit defaults to 50 records
+  * GBIF Occurrence persists raw JSON with metadata envelope
+  * GBIF Occurrence handles empty results gracefully
+  * GBIF Occurrence persists error responses without transformation
+  * GBIF Occurrence includes hasCoordinate=true parameter
+  * Wikipedia fetches summary via REST API
+  * Wikipedia fetches full extracts via action API
+  * Wikipedia persists raw responses with metadata envelope
+  * Wikipedia file naming includes batch number and ISO timestamp
+  * Wikipedia persists error responses without transformation
+  * Wikipedia summary handles missing page (404) gracefully
+  * Bronze supports at least 2 distinct batches per source
+  * Bronze raw_responses preserves query and response pairs
+  * Bronze directory structure is created automatically
+  * Bronze ingestion timestamp is in ISO 8601 format with Z suffix
+  * Bronze raw JSON files are valid JSON and can be parsed
+- Created tests/test_bronze.py with 19 automated verification tests
+- Updated docs/features/feature_list.json: marked tests #13-33, #196 as passing
+
+Tests marked passing: #13-33, #196 (22 Bronze tests)
+Current completion status: 36/201 tests passing
+
+Next session:
+- Verify full idempotency evidence with rows_new counts
+- Implement Silver layer validation tests
+- Run full seed batch (18 species) through pipeline

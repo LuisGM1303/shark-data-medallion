@@ -140,7 +140,7 @@
       "Step 3: Assert response contains usageKey, scientificName, matchType, kingdom, phylum, class",
       "Step 4: Verify response is valid JSON"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -151,7 +151,7 @@
       "Step 3: Assert matchType is not 'EXACT'",
       "Step 4: Verify raw response is preserved as-is"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -162,7 +162,7 @@
       "Step 3: Verify file contains 'source', 'lote', 'ingested_at', 'species_queried', 'raw_responses'",
       "Step 4: Assert 'source' field is 'gbif_taxonomy'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -173,7 +173,7 @@
       "Step 3: Assert timestamp uses ISO 8601 format",
       "Step 4: Verify file is in data/bronze/gbif_taxonomy/ directory"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -184,7 +184,7 @@
       "Step 3: Assert raw error response is preserved in raw_responses",
       "Step 4: Verify envelope metadata is still populated"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -195,7 +195,7 @@
       "Step 3: Assert response contains 'results' array",
       "Step 4: Verify each result has gbifID, decimalLatitude, decimalLongitude"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -206,7 +206,7 @@
       "Step 3: Assert results count <= 50 per query",
       "Step 4: Verify query parameter includes limit=50"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -217,7 +217,7 @@
       "Step 3: Verify envelope has source='gbif_occurrence', lote, ingested_at, species_queried, raw_responses",
       "Step 4: Assert raw responses are complete and untransformed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -228,7 +228,7 @@
       "Step 3: Assert raw_responses is persisted as-is",
       "Step 4: Verify envelope still has all required metadata fields"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -239,7 +239,7 @@
       "Step 3: Assert raw error response is in raw_responses",
       "Step 4: Verify envelope metadata is present"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -250,7 +250,7 @@
       "Step 3: Verify each result has non-null coordinates",
       "Step 4: Check coordinate_uncertainty_m is present if available"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -261,7 +261,7 @@
       "Step 3: Assert response contains title, extract, page_url",
       "Step 4: Verify response is valid JSON"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -272,7 +272,7 @@
       "Step 3: Assert response contains query.pages with extract content",
       "Step 4: Verify explaintext=true returns plain text (no HTML/markup)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -283,7 +283,7 @@
       "Step 3: Verify envelope has source='wikipedia', lote, ingested_at, species_queried, raw_responses",
       "Step 4: Assert summary and extracts responses are both preserved"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -294,7 +294,7 @@
       "Step 3: Assert file is in data/bronze/wikipedia/ directory",
       "Step 4: Verify a second batch produces lote_2 filename"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -305,7 +305,7 @@
       "Step 3: Assert envelope metadata is populated",
       "Step 4: Verify file is written to bronze"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -316,7 +316,7 @@
       "Step 3: Fetch data for Lote 2 with different species",
       "Step 4: Verify files exist with lote_2 prefix in each source directory"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -327,7 +327,7 @@
       "Step 3: Verify each object has 'query' and 'response' fields",
       "Step 4: Verify the response field contains the full API response"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -338,7 +338,7 @@
       "Step 3: Assert directories are created if missing",
       "Step 4: Verify data/.gitignore inside data/ (if needed)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -349,7 +349,7 @@
       "Step 3: Parse as ISO 8601 datetime (should not error)",
       "Step 4: Verify timestamp corresponds to actual ingestion time"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "bronze",
@@ -360,7 +360,7 @@
       "Step 3: Verify required envelope fields present",
       "Step 4: Verify content matches expected structure"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
@@ -2153,7 +2153,7 @@
       "Step 3: Assert error is persisted rather than crashing",
       "Step 4: Verify pipeline continues processing other species"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "silver",
