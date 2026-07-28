@@ -201,6 +201,7 @@ def run_pipeline(species_names: list[str], batch_id: str | None = None) -> dict:
 
     evidence = wh.get_evidence()
     summary["warehouse"] = evidence
+    wh.close()
 
     all_chunks: list[dict] = []
     for merged in all_merged:

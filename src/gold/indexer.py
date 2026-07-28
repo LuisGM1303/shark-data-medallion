@@ -202,16 +202,15 @@ def _load_index_and_metadata():
 
 def _get_merged_for_species(species_key: str) -> dict | None:
     try:
-        import duckdb
-        conn = duckdb.connect("data/warehouse.duckdb")
+        from src.warehouse.loader import Warehouse
+        wh = Warehouse()
+        conn = wh.connect()
         row = conn.execute(
             "SELECT * FROM species_merged WHERE species_key = ?", [species_key]
         ).fetchone()
         if row is None:
-            conn.close()
             return None
         columns = [desc[0] for desc in conn.description]
-        conn.close()
         return dict(zip(columns, row))
     except Exception:
         return None

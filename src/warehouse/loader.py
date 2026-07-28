@@ -7,15 +7,16 @@ import duckdb
 
 
 class Warehouse:
+    _connections: dict[str, duckdb.DuckDBPyConnection] = {}
+
     def __init__(self, db_path: str = "data/warehouse.duckdb"):
         self.db_path = db_path
-        self._conn: duckdb.DuckDBPyConnection | None = None
 
     def connect(self) -> duckdb.DuckDBPyConnection:
         os.makedirs(os.path.dirname(self.db_path) or ".", exist_ok=True)
-        if self._conn is None:
-            self._conn = duckdb.connect(self.db_path)
-        return self._conn
+        if self.db_path not in Warehouse._connections:
+            Warehouse._connections[self.db_path] = duckdb.connect(self.db_path)
+        return Warehouse._connections[self.db_path]
 
     def initialize_schema(self) -> None:
         conn = self.connect()
@@ -193,6 +194,24 @@ class Warehouse:
                 actualizadas += 1
         despues = self._count(table)
         return {"tabla": table, "filas_antes": antes, "filas_despues": despues, "filas_nuevas": nuevas, "filas_actualizadas": actualizadas}
+
+    def close(self) -> None:
+        conn = Warehouse._connections.pop(self.db_path, None)
+        if conn is not None:
+            conn.close()
+
+    @classmethod
+    def close_all(cls) -> None:
+        for path, conn in list(cls._connections.items()):
+            conn.close()
+            del cls._connections[path]
+
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def get_evidence(self) -> list[dict]:
         tables = ["silver_wikipedia", "silver_gbif_taxonomy", "silver_gbif_occurrences", "species_merged", "species_catalog"]

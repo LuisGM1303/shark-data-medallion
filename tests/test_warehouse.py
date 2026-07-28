@@ -35,6 +35,7 @@ TEST_DB = "data/test_warehouse.duckdb"
 
 
 def _cleanup():
+    Warehouse.close_all()
     if os.path.exists(TEST_DB):
         try:
             os.remove(TEST_DB)
