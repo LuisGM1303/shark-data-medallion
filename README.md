@@ -111,7 +111,3 @@ src/
 ## Features
 
 Complete feature list: `docs/features/feature_list.json`
-
-## License
-
-MIT
