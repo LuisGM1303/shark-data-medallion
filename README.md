@@ -88,8 +88,8 @@ results = search("great white shark diet", top_k=5)
 # With filters
 results = search(
     "shark habitat",
-    filtro_taxonomia={"class_name": "Chondrichthyes"},
-    filtro_iucn="VULNERABLE",
+    filtro_taxonomia={"class_name": "Elasmobranchii"},
+    filtro_iucn="VU",
     filtro_pais="South Africa"
 )
 ```

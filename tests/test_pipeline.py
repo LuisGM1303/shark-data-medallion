@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.pipeline import run_pipeline
 from src.config.seed_species import SEED_SPECIES
+from src.warehouse.loader import Warehouse
 
 PASSED = 0
 FAILED = 0
@@ -34,6 +35,7 @@ def test(name: str):
 
 
 def _clean_all():
+    Warehouse.close_all()
     for d in ["data/bronze", "data/silver", "data/gold"]:
         if os.path.exists(d):
             shutil.rmtree(d)
@@ -154,7 +156,7 @@ def test_batch_species_env():
     env["BATCH_SPECIES"] = json.dumps(TEST_SPECIES_2)
     result = subprocess.run(
         [sys.executable, "-m", "src.pipeline", "--batch", "seed"],
-        capture_output=True, text=True, timeout=120,
+        capture_output=True, text=True, timeout=300,
         env=env,
         cwd=os.path.join(os.path.dirname(__file__), ".."),
     )

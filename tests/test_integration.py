@@ -32,6 +32,7 @@ def test(name: str):
 
 
 def _clean_all():
+    Warehouse.close_all()
     for d in ["data/bronze", "data/silver", "data/gold"]:
         if os.path.exists(d):
             shutil.rmtree(d)

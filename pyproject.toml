@@ -16,6 +16,22 @@ dependencies = [
     "pyarrow>=12.0.0",
 ]
 
+[dependency-groups]
+dev = ["pytest>=9.0"]
+
+[tool.setuptools]
+package-dir = {"src" = "src"}
+packages = [
+    "src",
+    "src.bronze",
+    "src.config",
+    "src.gold",
+    "src.merge",
+    "src.resolver",
+    "src.silver",
+    "src.warehouse",
+]
+
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
