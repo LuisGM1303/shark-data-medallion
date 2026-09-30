@@ -21,12 +21,22 @@ _HEADERS = {
 }
 
 
-def _request_with_retry(url: str, params: dict, max_retries: int = 3) -> requests.Response:
+def _retry_wait(resp: requests.Response, attempt: int) -> float:
+    retry_after = resp.headers.get("Retry-After")
+    if retry_after:
+        try:
+            return max(1.0, float(retry_after))
+        except ValueError:
+            pass
+    return min(2 ** attempt, 30.0)
+
+
+def _request_with_retry(url: str, params: dict, max_retries: int = 5) -> requests.Response:
+    resp = None
     for attempt in range(max_retries):
         resp = requests.get(url, params=params, headers=_HEADERS, timeout=15)
         if resp.status_code == 429:
-            wait = 2 ** attempt
-            time.sleep(wait)
+            time.sleep(_retry_wait(resp, attempt))
             continue
         resp.raise_for_status()
         return resp

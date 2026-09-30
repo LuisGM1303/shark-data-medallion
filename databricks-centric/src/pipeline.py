@@ -9,6 +9,7 @@ this module only orchestrates and assembles operational fields.
 from __future__ import annotations
 
 import json
+import time
 import uuid
 from datetime import datetime, timezone
 
@@ -44,6 +45,9 @@ _RESOLUTION_REJECTIONS = {
     ResolutionStatus.AMBIGUOUS_RESOLUTION,
     ResolutionStatus.DISAMBIGUATION_PAGE,
 }
+
+# Polite delay between species to stay under Wikipedia's rate limit.
+REQUEST_DELAY_SECONDS = 1.0
 
 
 def _ingestion_id(run_id: str, source: str, species_key: str) -> str:
@@ -121,7 +125,9 @@ def run_pipeline(
         "gbif_occurrence_valid": 0, "gbif_occurrence_rejected": 0,
     }
 
-    for sci_name in species_names:
+    for i, sci_name in enumerate(species_names):
+        if i > 0:
+            time.sleep(REQUEST_DELAY_SECONDS)
         sk = slugify(sci_name)
         scientific_name_by_sk[sk] = sci_name
 
