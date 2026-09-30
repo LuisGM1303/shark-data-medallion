@@ -35,18 +35,29 @@ paquetes, (b) salir a internet y (c) usar Unity Catalog.
 ```python
 import requests
 
+HEADERS = {
+    "User-Agent": "SharkKnowledgeMedallion/2.0 (educational project; mailto:example@example.com)"
+}
+
 r1 = requests.get(
     "https://en.wikipedia.org/api/rest_v1/page/summary/Great_white_shark",
+    headers=HEADERS,
     timeout=15,
 )
 r2 = requests.get(
     "https://api.gbif.org/v1/species/match",
     params={"name": "Carcharodon carcharias"},
+    headers=HEADERS,
     timeout=15,
 )
 print("Wikipedia status:", r1.status_code)
 print("GBIF status:", r2.status_code)
 ```
+
+> **Importante:** Wikipedia devuelve `403` si la petición no lleva un header
+> `User-Agent`. El pipeline real ya lo incluye (en `src/bronze/fetcher.py` y
+> `src/resolver/wikipedia.py`); aquí lo agregamos solo para que el smoke test
+> sea fiel al código.
 
 ```python
 spark.sql("CREATE CATALOG IF NOT EXISTS shark_knowledge")
