@@ -1,0 +1,1958 @@
+Software Architecture Specification (SAS)
+=========================================
+
+Shark Knowledge — Databricks-Centric Medallion Architecture
+Version 2.0
+Date: 2026-09-30
+Status: Architecture Baseline / Data-Ready Target
+
+
+1. PURPOSE
+==========
+
+This specification defines the target architecture for the evolution of Shark Knowledge
+from a local-first Python implementation to a Databricks-centric lakehouse implementation.
+
+The primary objective of version 2.0 is to preserve the validated business behavior of
+the existing Python project while replacing local persistence and retrieval infrastructure
+with native Databricks capabilities.
+
+The immediate implementation goal is DATA READY:
+
+    External APIs
+        -> Bronze Delta
+        -> Silver Delta
+        -> Gold Delta
+
+The planned future evolution is:
+
+    Gold SpeciesChunks
+        -> Databricks AI Search Delta Sync Index
+        -> Knowledge Assistant
+
+Knowledge Assistant is explicitly NOT part of the first implementation milestone of v2.
+
+
+2. BACKGROUND AND CURRENT STATE
+===============================
+
+2.1 Existing v1 implementation
+------------------------------
+
+The current project is a complete local Python implementation of a medallion-style
+knowledge ingestion pipeline for shark species.
+
+The existing flow is:
+
+    GBIF Species Match ---------+
+    GBIF Occurrence Search -----+--> Bronze JSON
+    Wikipedia ------------------+
+                                      |
+                                      v
+                                  Silver JSON
+                                      |
+                                      v
+                                     Merge
+                                      |
+                                      v
+                               DuckDB Warehouse
+                                      |
+                                      v
+                                     Gold
+                                      |
+                                      v
+                           Local embeddings + FAISS
+                                      |
+                                      v
+                              custom search()
+
+The implementation uses:
+
+- Python 3.11+
+- Pydantic v2
+- requests
+- DuckDB
+- sentence-transformers
+- BAAI/bge-small-en-v1.5
+- FAISS IndexHNSWFlat
+- pandas
+- Docker Compose
+- Jupyter Lab
+
+
+2.2 Verified project maturity
+-----------------------------
+
+The current v1 implementation is not a prototype consisting only of stubs.
+
+It has been fully implemented and verified with:
+
+- Resolver logic for slugification, Wikipedia direct resolution, search, redirects,
+  disambiguation handling and missing-page handling.
+- Bronze ingestion against live Wikipedia and GBIF APIs.
+- Explicit raw-response persistence.
+- Pydantic validation for all three source contracts.
+- Explicit rejection reasons.
+- Wikipedia-pivot merge behavior.
+- GBIF taxonomy augmentation.
+- GBIF occurrence aggregation.
+- DuckDB UPSERT logic.
+- Species catalog management.
+- Canonical Species model.
+- Semantic section-based chunking.
+- Local embedding generation.
+- FAISS vector indexing.
+- Structured retrieval filters.
+- End-to-end orchestration.
+- Idempotency verification.
+- Retry with exponential backoff for Wikipedia rate limits.
+- Seed, ad-hoc and mixed-batch processing.
+
+The existing verification baseline reached:
+
+    201 / 201 tests passing
+
+A complete run with all 18 seed species produced approximately:
+
+    18 valid Wikipedia species
+    18 valid GBIF taxonomy records
+    484 valid GBIF occurrences
+    416 rejected GBIF occurrence records
+    18 merged species
+    149 semantic chunks
+    149 FAISS vectors
+
+This verified behavior is treated as functional capital and should be preserved whenever
+the behavior expresses a domain rule rather than a local implementation detail.
+
+
+3. ARCHITECTURAL GOAL
+=====================
+
+Version 2.0 SHALL evolve the project into a Databricks-native data architecture while
+preserving the existing domain model and validation behavior.
+
+The v2 target architecture is:
+
+                    SHARK KNOWLEDGE v2
+
+                 Custom Python ingestion
+                         |
+          +--------------+---------------+
+          |              |               |
+      Wikipedia     GBIF Match     GBIF Occurrence
+          |              |               |
+          +--------------+---------------+
+                         |
+                         v
+              +-------------------+
+              |      BRONZE       |
+              |                   |
+              | Delta raw tables  |
+              | append-only       |
+              +---------+---------+
+                        |
+                 Python/Pydantic
+                   validation
+                        |
+                        v
+              +-------------------+
+              |      SILVER       |
+              |                   |
+              | validated Delta   |
+              | quarantine Delta  |
+              +---------+---------+
+                        |
+                 knowledge merge
+                        |
+                        v
+              +-------------------+
+              |       GOLD        |
+              |                   |
+              | species           |
+              | species_chunks    |
+              +---------+---------+
+                        |
+                   DATA READY
+                        |
+                        v
+               [future milestone]
+              Databricks AI Search
+                        |
+                        v
+               [future milestone]
+              Knowledge Assistant
+
+
+4. SCOPE
+========
+
+4.1 In scope for Data Ready
+---------------------------
+
+- Wikipedia English API ingestion.
+- GBIF Species Match API ingestion.
+- GBIF Occurrence Search API ingestion.
+- Dynamic processing of seed and ad-hoc species.
+- Existing species_key semantics.
+- Existing Wikipedia resolution logic.
+- Existing retry behavior.
+- Raw Bronze persistence in Delta.
+- Pydantic validation.
+- Silver Delta tables.
+- Explicit quarantine/rejected-record persistence.
+- Existing Wikipedia-pivot integration rules.
+- Existing GBIF augmentation rules.
+- Gold canonical Species table.
+- Gold semantic SpeciesChunks table.
+- Content hashing.
+- Idempotent Delta MERGE behavior.
+- Unity Catalog organization.
+- Notebook/Job execution.
+- Verification of Data Ready acceptance criteria.
+
+
+4.2 Deferred
+------------
+
+The following capabilities are intentionally deferred until the Data Ready milestone:
+
+- Databricks AI Search index creation.
+- Managed embedding generation.
+- Retrieval implementation through AI Search.
+- Knowledge Assistant.
+- Agent evaluation.
+- Reranking.
+- GraphRAG.
+- Query Planner.
+- Natural-language-to-filter extraction.
+
+
+4.3 Explicitly removed from target runtime
+------------------------------------------
+
+The following v1 infrastructure SHALL NOT be part of the Databricks v2 runtime:
+
+- DuckDB warehouse.
+- FAISS IndexHNSWFlat.
+- Local embedding model runtime.
+- metadata.parquet for FAISS row mapping.
+- Docker Compose deployment.
+- Separate Jupyter Lab service.
+- File-based Silver valid/rejected persistence.
+- Separate persisted SpeciesMetadata entity.
+- Separate physical Merge data layer.
+- Separate species_catalog table.
+
+
+5. ARCHITECTURAL PRINCIPLES
+===========================
+
+The v2 architecture SHALL follow these principles:
+
+1. Preserve proven domain behavior.
+2. Replace infrastructure, not validated business logic.
+3. Keep the implementation Python-first.
+4. Keep notebooks thin.
+5. Use Delta managed tables as the persistence foundation.
+6. Use Unity Catalog for logical organization and governance.
+7. Keep Bronze reconstructable and append-only.
+8. Use Silver as the validation and data-quality boundary.
+9. Use Gold as the consumer-oriented knowledge product.
+10. Prefer deterministic natural keys over generated surrogate keys.
+11. Make idempotency content-aware.
+12. Preserve rejection reasons and lineage.
+13. Avoid unnecessary platform features during initial migration.
+14. Do not introduce Lakeflow Spark Declarative Pipelines until the basic Delta design
+    is working and understood.
+15. Do not redesign working Python code unless the current behavior conflicts with
+    the target lakehouse model.
+16. Preserve KISS: extensibility without present over-design.
+
+
+6. DATABRICKS DESIGN ALIGNMENT
+==============================
+
+The target follows the Databricks Medallion Architecture pattern:
+
+    Bronze -> raw data
+    Silver -> validated/refined data
+    Gold   -> business/project-ready data products
+
+Databricks describes Medallion as a logical data design pattern in which structure,
+quality and reliability increase progressively between layers.
+
+The architecture uses:
+
+    Catalog:
+        shark_knowledge
+
+    Schemas:
+        shark_knowledge.bronze
+        shark_knowledge.silver
+        shark_knowledge.gold
+
+A separate catalog per medallion layer is not required.
+
+
+7. FREE EDITION DEPLOYMENT CONSTRAINTS
+======================================
+
+The initial target environment is Databricks Free Edition.
+
+As of 2026-09-30, relevant documented Free Edition limitations include:
+
+- Serverless compute only.
+- Limited compute and usage quotas.
+- One AI Search endpoint.
+- One search unit for AI Search.
+- Free Edition is intended for non-commercial use.
+
+
+8. DATA ARCHITECTURE
+====================
+
+8.1 Logical flow
+----------------
+
+    Wikipedia raw ----------+
+                            |
+    GBIF taxonomy raw ------+--> Bronze
+                            |
+    GBIF occurrence raw ----+
+                                 |
+                                 v
+                              Silver
+                  +--------------+---------------+
+                  |              |               |
+             Wikipedia      Taxonomy       Occurrences
+                  |              |               |
+                  +--------------+---------------+
+                                 |
+                                 v
+                         knowledge integration
+                                 |
+                                 v
+                               Gold
+                         +-------+--------+
+                         |                |
+                      Species      SpeciesChunks
+
+
+8.2 Physical objects
+--------------------
+
+BRONZE
+
+    shark_knowledge.bronze.wikipedia_raw
+    shark_knowledge.bronze.gbif_taxonomy_raw
+    shark_knowledge.bronze.gbif_occurrence_raw
+
+SILVER
+
+    shark_knowledge.silver.wikipedia_pages
+    shark_knowledge.silver.gbif_taxonomy
+    shark_knowledge.silver.gbif_occurrences
+    shark_knowledge.silver.rejected_records
+
+GOLD
+
+    shark_knowledge.gold.species
+    shark_knowledge.gold.species_chunks
+
+
+9. GLOBAL DATA CONVENTIONS
+==========================
+
+9.1 species_key
+---------------
+
+species_key remains the canonical species identifier.
+
+It is generated deterministically:
+
+    species_key = slugify(scientific_name)
+
+Example:
+
+    "Prionace glauca" -> "prionace_glauca"
+
+The universe of species remains open.
+
+Seed species are demonstration inputs, not an access-control list.
+
+
+9.2 run_id and batch_id
+-----------------------
+
+batch_id identifies a logical requested batch.
+
+run_id identifies one physical execution.
+
+Example:
+
+    batch_id = "seed_batch_01"
+
+    first execution:
+        run_id = UUID-A
+
+    second execution:
+        run_id = UUID-B
+
+This permits repeated execution of the same batch while retaining operational auditability.
+
+
+9.3 content_hash
+----------------
+
+Silver and Gold records SHALL use a deterministic SHA-256 content hash.
+
+The hash SHALL be calculated from a canonical representation of business fields.
+
+Operational fields SHALL NOT affect the hash.
+
+Excluded examples:
+
+- run_id
+- validated_at
+- load timestamp
+- last execution timestamp
+
+Included fields are the data values whose semantic change must propagate downstream.
+
+Canonical serialization SHALL use:
+
+- UTF-8.
+- Stable field ordering.
+- Stable NULL representation.
+- Deterministic list ordering where order is semantically defined.
+
+The Delta update rule is:
+
+    natural key exists AND content_hash changed
+        -> UPDATE
+
+    natural key exists AND content_hash unchanged
+        -> NO OP
+
+    natural key does not exist
+        -> INSERT
+
+
+9.4 Logical constraints
+-----------------------
+
+Primary keys documented in this SAS are logical business constraints.
+
+Idempotency SHALL be enforced by pipeline logic and Delta MERGE semantics.
+
+The design does not depend on Databricks enforcing uniqueness constraints physically.
+
+
+10. BRONZE LAYER
+================
+
+10.1 Purpose
+------------
+
+Bronze represents the exact source observations obtained during ingestion.
+
+Bronze is:
+
+- append-only;
+- reconstructable;
+- audit-oriented;
+- minimally transformed;
+- not semantically validated.
+
+Errors are data.
+
+HTTP errors, empty responses and source anomalies SHALL be persisted whenever a request
+produces an observable response/result.
+
+
+10.2 Raw payload representation
+-------------------------------
+
+raw_payload SHALL initially use STRING containing the complete raw JSON/envelope.
+
+Reason:
+
+- Bronze's primary responsibility is faithful capture.
+- Existing Python fetchers already produce JSON envelopes.
+- Silver owns semantic parsing and validation.
+- The project does not currently require complex Bronze-level semi-structured queries.
+
+VARIANT may be evaluated in a later revision if Bronze querying requirements justify it.
+
+
+10.3 bronze.wikipedia_raw
+-------------------------
+
+Granularity:
+
+    one row per species fetch attempt per physical run
+
+Fields:
+
+    ingestion_id        STRING       NOT NULL
+    run_id              STRING       NOT NULL
+    batch_id            STRING       NOT NULL
+    species_key         STRING       NOT NULL
+    scientific_name     STRING       NOT NULL
+    raw_payload         STRING       NOT NULL
+    ingested_at         TIMESTAMP    NOT NULL
+
+Write semantics:
+
+    APPEND ONLY
+
+
+10.4 bronze.gbif_taxonomy_raw
+-----------------------------
+
+Granularity:
+
+    one row per species Match API fetch attempt per physical run
+
+Fields:
+
+    ingestion_id        STRING       NOT NULL
+    run_id              STRING       NOT NULL
+    batch_id            STRING       NOT NULL
+    species_key         STRING       NOT NULL
+    scientific_name     STRING       NOT NULL
+    raw_payload         STRING       NOT NULL
+    ingested_at         TIMESTAMP    NOT NULL
+
+Write semantics:
+
+    APPEND ONLY
+
+
+10.5 bronze.gbif_occurrence_raw
+-------------------------------
+
+Granularity:
+
+    one row per species Occurrence Search fetch attempt per physical run
+
+A single raw payload can contain zero, one or many GBIF occurrence records.
+
+Fields:
+
+    ingestion_id        STRING       NOT NULL
+    run_id              STRING       NOT NULL
+    batch_id            STRING       NOT NULL
+    species_key         STRING       NOT NULL
+    scientific_name     STRING       NOT NULL
+    raw_payload         STRING       NOT NULL
+    ingested_at         TIMESTAMP    NOT NULL
+
+Write semantics:
+
+    APPEND ONLY
+
+
+11. SILVER LAYER
+================
+
+11.1 Validation strategy
+------------------------
+
+Existing Pydantic v2 contracts SHALL be retained during the first Databricks migration.
+
+The validation flow becomes:
+
+    Bronze Delta
+        |
+        v
+    Python deserialize
+        |
+        v
+    Pydantic validation
+        |
+        +--> valid ------> Silver Delta
+        |
+        +--> invalid ----> silver.rejected_records
+
+Pydantic remains the executable Python contract.
+
+Delta becomes the persistence contract.
+
+Lakeflow Expectations are explicitly deferred and MAY later replace or complement
+selected validation rules.
+
+
+11.2 silver.wikipedia_pages
+---------------------------
+
+Logical primary key:
+
+    species_key
+
+Fields:
+
+    species_key             STRING       NOT NULL
+    title                   STRING       NOT NULL
+    resolved_via            STRING       NOT NULL
+    extract                 STRING       NOT NULL
+    sections_text           STRING       NOT NULL
+    page_url                STRING       NOT NULL
+    is_disambiguation       BOOLEAN      NOT NULL
+    source_ingestion_id     STRING       NOT NULL
+    content_hash            STRING       NOT NULL
+    validated_at            TIMESTAMP    NOT NULL
+
+Allowed resolved_via:
+
+    DIRECT_TITLE
+    SEARCH
+    REDIRECT
+
+Existing rejection behavior remains in force, including:
+
+    PAGE_NOT_FOUND
+    AMBIGUOUS_RESOLUTION
+    EXTRACT_TOO_SHORT
+    DISAMBIGUATION_PAGE
+    HTTP_ERROR
+    MISSING_SECTIONS_TEXT
+
+Write semantics:
+
+    MERGE ON species_key
+
+Update condition:
+
+    source.content_hash <> target.content_hash
+
+
+11.3 silver.gbif_taxonomy
+-------------------------
+
+Logical primary key:
+
+    species_key
+
+Fields:
+
+    species_key             STRING       NOT NULL
+    usage_key               BIGINT       NOT NULL
+    scientific_name         STRING       NOT NULL
+    canonical_name          STRING       NOT NULL
+    rank                    STRING       NOT NULL
+    match_type              STRING       NOT NULL
+    confidence              INT          NOT NULL
+    kingdom                 STRING       NULL
+    phylum                  STRING       NULL
+    class_name              STRING       NULL
+    source_ingestion_id     STRING       NOT NULL
+    content_hash            STRING       NOT NULL
+    validated_at            TIMESTAMP    NOT NULL
+
+Acceptance rule:
+
+    match_type == "EXACT"
+
+Existing rejection reasons remain:
+
+    MATCH_TYPE_NOT_EXACT
+    NO_MATCH_RETURNED
+    HTTP_ERROR
+
+Write semantics:
+
+    MERGE ON species_key
+
+
+11.4 silver.gbif_occurrences
+----------------------------
+
+Logical primary key:
+
+    gbif_id
+
+Granularity:
+
+    one valid occurrence per row
+
+Fields:
+
+    gbif_id                     BIGINT       NOT NULL
+    species_key                 STRING       NOT NULL
+    decimal_latitude            DOUBLE       NOT NULL
+    decimal_longitude           DOUBLE       NOT NULL
+    country                     STRING       NULL
+    event_date                  TIMESTAMP    NULL
+    basis_of_record             STRING       NOT NULL
+    iucn_red_list_category      STRING       NULL
+    coordinate_uncertainty_m    DOUBLE       NULL
+    source_ingestion_id         STRING       NOT NULL
+    content_hash                STRING       NOT NULL
+    validated_at                TIMESTAMP    NOT NULL
+
+Existing domain validation remains:
+
+    latitude in [-90, 90]
+    longitude in [-180, 180]
+    gbif_id required
+    basis_of_record required
+    event_date valid when present
+
+Existing rejection reasons remain:
+
+    MISSING_COORDINATES
+    COORDINATES_OUT_OF_RANGE
+    MISSING_GBIF_ID
+    INVALID_EVENT_DATE
+    MISSING_BASIS_OF_RECORD
+
+Write semantics:
+
+    MERGE ON gbif_id
+
+
+11.5 silver.rejected_records
+----------------------------
+
+Purpose:
+
+    unified quarantine and audit table for invalid records
+
+Logical primary key:
+
+    rejection_id
+
+Fields:
+
+    rejection_id            STRING       NOT NULL
+    run_id                  STRING       NOT NULL
+    batch_id                STRING       NOT NULL
+    source                  STRING       NOT NULL
+    species_key             STRING       NULL
+    natural_key             STRING       NULL
+    rejection_reason        STRING       NOT NULL
+    rejection_detail        STRING       NULL
+    record_payload          STRING       NOT NULL
+    record_hash             STRING       NOT NULL
+    source_ingestion_id     STRING       NULL
+    rejected_at             TIMESTAMP    NOT NULL
+
+rejection_id SHALL be deterministic.
+
+Recommended calculation:
+
+    SHA256(
+        source
+        + natural/business key
+        + rejection_reason
+        + record_hash
+    )
+
+Purpose:
+
+    repeated processing of the same invalid logical record SHALL NOT create uncontrolled
+    duplicate quarantine records.
+
+Write semantics:
+
+    MERGE ON rejection_id
+
+
+12. KNOWLEDGE INTEGRATION RULES
+===============================
+
+The physical Merge layer is removed.
+
+The existing merge/merger.py business logic remains and becomes the transformation
+between Silver and Gold.
+
+
+12.1 Wikipedia pivot
+--------------------
+
+Wikipedia remains mandatory.
+
+A species without a valid Silver Wikipedia page SHALL NOT be inserted into Gold.
+
+GBIF SHALL NOT independently introduce a species into Gold.
+
+
+12.2 GBIF taxonomy augmentation
+-------------------------------
+
+Taxonomy is joined by species_key only when:
+
+    match_type == EXACT
+
+When taxonomy is not available/valid:
+
+    taxonomy_status = UNMATCHED
+
+The species may remain valid because Wikipedia is the mandatory pivot.
+
+
+12.3 GBIF occurrence aggregation
+--------------------------------
+
+Valid occurrence rows SHALL be aggregated by species_key.
+
+Required derived fields:
+
+    n_valid_occurrences
+    countries
+    year_min
+    year_max
+    iucn_red_list_category
+
+countries SHALL remain deterministically ordered according to the current project rule,
+which orders countries by descending frequency.
+
+IUCN mode/tie behavior SHALL preserve the existing deterministic implementation.
+
+When zero valid occurrences exist:
+
+    augmentation_status = GBIF_AUGMENTATION_EMPTY
+
+This is not a fatal error.
+
+
+13. GOLD LAYER
+==============
+
+13.1 Purpose
+------------
+
+Gold contains consumer-oriented knowledge products.
+
+Gold does not represent another raw integration stage.
+
+Gold exposes:
+
+    gold.species
+    gold.species_chunks
+
+These two objects replace the v1 combination of:
+
+    species_merged
+    species_catalog
+    Species persisted model
+    SpeciesMetadata persisted model
+    local chunk metadata
+
+
+13.2 gold.species
+-----------------
+
+Purpose:
+
+    canonical Parent document representing one accepted species
+
+Logical primary key:
+
+    species_key
+
+Granularity:
+
+    exactly one current row per accepted species
+
+
+Identity fields:
+
+    species_key                 STRING       NOT NULL
+    scientific_name             STRING       NOT NULL
+    wikipedia_title             STRING       NOT NULL
+    document_uri                STRING       NOT NULL
+
+Canonical Knowledge Model:
+
+    identity                    STRING       NULL
+    taxonomy                    STRING       NULL
+    morphology                  STRING       NULL
+    distribution                STRING       NULL
+    habitat                     STRING       NULL
+    behavior                    STRING       NULL
+    diet                        STRING       NULL
+    reproduction                STRING       NULL
+    conservation                STRING       NULL
+    human_interaction           STRING       NULL
+    references                  STRING       NULL
+    multimedia                  STRING       NULL
+    document_text               STRING       NOT NULL
+
+document_text SHALL be a deterministic concatenation of non-null canonical sections.
+
+Structured metadata:
+
+    kingdom                     STRING       NULL
+    phylum                      STRING       NULL
+    class_name                  STRING       NULL
+    rank                        STRING       NULL
+    taxonomy_status             STRING       NOT NULL
+    iucn_red_list_category      STRING       NULL
+    countries                   ARRAY<STRING> NOT NULL
+    year_min                    INT          NULL
+    year_max                    INT          NULL
+    n_valid_occurrences         BIGINT       NOT NULL
+    augmentation_status         STRING       NOT NULL
+
+Lifecycle:
+
+    origin                      STRING       NOT NULL
+    first_processed_at          TIMESTAMP    NOT NULL
+    last_content_change_at      TIMESTAMP    NOT NULL
+    content_hash                STRING       NOT NULL
+
+Allowed origin values:
+
+    SEED
+    AD_HOC
+
+Allowed taxonomy_status values:
+
+    MATCHED
+    UNMATCHED
+
+Allowed augmentation_status values:
+
+    OK
+    GBIF_AUGMENTATION_EMPTY
+
+Write semantics:
+
+    MERGE ON species_key
+
+Important decision:
+
+    gold.species replaces species_catalog.
+
+The known species catalog is obtained from Gold directly.
+
+
+13.3 gold.species_chunks
+------------------------
+
+Purpose:
+
+    retrieval-oriented Gold data product and future AI Search source table
+
+Logical primary key:
+
+    chunk_id
+
+Granularity:
+
+    one semantic chunk per row
+
+
+Chunk identity:
+
+    chunk_id                    STRING       NOT NULL
+    species_key                 STRING       NOT NULL
+    section                     STRING       NOT NULL
+    chunk_ordinal               INT          NOT NULL
+    text                        STRING       NOT NULL
+
+Parent identity:
+
+    scientific_name             STRING       NOT NULL
+    wikipedia_title             STRING       NOT NULL
+    document_uri                STRING       NOT NULL
+
+Retrieval metadata:
+
+    kingdom                     STRING       NULL
+    phylum                      STRING       NULL
+    class_name                  STRING       NULL
+    rank                        STRING       NULL
+    taxonomy_status             STRING       NOT NULL
+    iucn_red_list_category      STRING       NULL
+    countries                   ARRAY<STRING> NOT NULL
+    year_min                    INT          NULL
+    year_max                    INT          NULL
+    n_valid_occurrences         BIGINT       NOT NULL
+    augmentation_status         STRING       NOT NULL
+
+Versioning:
+
+    parent_content_hash         STRING       NOT NULL
+    content_hash                STRING       NOT NULL
+    last_content_change_at      TIMESTAMP    NOT NULL
+
+The duplication of metadata in every chunk is intentional.
+
+Reason:
+
+    the future retrieval serving layer must be able to return and filter records without
+    requiring a runtime join to a separate SpeciesMetadata table.
+
+Therefore SpeciesMetadata is no longer a persisted standalone entity.
+
+
+14. CHUNKING CONTRACT
+=====================
+
+14.1 Semantic strategy
+----------------------
+
+The existing semantic section-first strategy is preserved.
+
+Canonical sections remain:
+
+    Identity
+    Taxonomy
+    Morphology
+    Distribution
+    Habitat
+    Behavior
+    Diet
+    Reproduction
+    Conservation
+    Human Interaction
+    References
+    Multimedia
+
+
+14.2 Evolution from v1
+----------------------
+
+v1 effectively used:
+
+    one non-null canonical section -> one chunk
+
+v2 SHALL use:
+
+    canonical section
+        |
+        +--> sufficiently small -> one chunk
+        |
+        +--> too large ----------> N deterministic subchunks
+
+Fixed-size chunking without semantic section context is not adopted.
+
+
+14.3 chunk_id
+-------------
+
+chunk_id remains deterministic.
+
+Format:
+
+    {species_key}__{section}__{ordinal:03d}
+
+Examples:
+
+    carcharodon_carcharias__habitat__001
+    carcharodon_carcharias__habitat__002
+
+
+14.4 Initial size bound
+-----------------------
+
+Initial design bound:
+
+    MAX_CHUNK_BYTES = 24_000
+
+Measured as:
+
+    len(text.encode("utf-8"))
+
+The margin is deliberately conservative to leave room for future AI Search embedding
+source-column limits.
+
+Chunk splitting SHALL preserve deterministic ordering.
+
+
+15. IDEMPOTENCY MODEL
+=====================
+
+v2 explicitly distinguishes raw-history idempotency from logical-state idempotency.
+
+
+15.1 Bronze
+-----------
+
+Bronze is append-only.
+
+Re-running the same logical batch may produce new raw observations.
+
+This is allowed and desirable because Bronze is an ingestion audit trail.
+
+
+15.2 Silver
+-----------
+
+For an identical logical source state:
+
+    zero new logical records
+    zero unnecessary updates
+
+A record is updated only when the content hash changes.
+
+
+15.3 Gold
+---------
+
+For an identical Silver state:
+
+    zero new Species
+    zero new SpeciesChunks
+    zero unnecessary updates
+    zero content_hash changes
+
+This makes downstream synchronization content-aware.
+
+
+15.4 New idempotency definition
+-------------------------------
+
+For the same logical state of the sources, repeated executions may append new Bronze
+observations but MUST converge to the same logical Silver and Gold state.
+
+
+16. SOFTWARE ARCHITECTURE
+=========================
+
+The project remains Python-first.
+
+Recommended v2 source layout:
+
+    src/
+    |
+    +-- bronze/
+    |   +-- fetcher.py
+    |
+    +-- silver/
+    |   +-- models.py
+    |   +-- validator.py
+    |
+    +-- merge/
+    |   +-- merger.py
+    |
+    +-- gold/
+    |   +-- models.py
+    |   +-- chunker.py
+    |
+    +-- storage/
+    |   +-- delta.py
+    |
+    +-- resolver/
+    |   +-- slugify.py
+    |   +-- wikipedia.py
+    |
+    +-- config/
+    |   +-- seed_species.py
+    |
+    +-- pipeline.py
+
+
+16.1 New storage module
+-----------------------
+
+storage/delta.py SHALL centralize Delta persistence behavior.
+
+Expected responsibilities:
+
+    append_wikipedia_bronze(...)
+    append_gbif_taxonomy_bronze(...)
+    append_gbif_occurrence_bronze(...)
+
+    merge_wikipedia_silver(...)
+    merge_gbif_taxonomy_silver(...)
+    merge_gbif_occurrences_silver(...)
+    merge_rejected_records(...)
+
+    merge_species(...)
+    merge_species_chunks(...)
+
+The module SHOULD remain simple.
+
+Do not introduce repositories, ports/adapters, services or unnecessary abstraction layers
+unless an actual implementation problem justifies them.
+
+
+16.2 Components retained
+------------------------
+
+The following existing modules should be preserved and minimally adapted:
+
+    resolver/slugify.py
+    resolver/wikipedia.py
+    bronze/fetcher.py HTTP behavior
+    silver/models.py
+    silver/validator.py
+    merge/merger.py
+    gold/models.py
+    semantic chunking logic
+    pipeline.py orchestration behavior
+
+
+16.3 Components retired
+------------------------
+
+The following implementation-specific components are retired in v2:
+
+    warehouse/loader.py DuckDB persistence
+    DuckDB schema
+    species_catalog table
+    gold/indexer.py FAISS behavior
+    sentence-transformer embedding runtime
+    FAISS metadata parquet
+    local search() implementation
+    Dockerfile deployment
+    docker-compose runtime topology
+
+
+17. NOTEBOOK AND ORCHESTRATION MODEL
+===================================
+
+Notebooks SHALL be thin execution and demonstration surfaces.
+
+Recommended notebooks:
+
+    00_setup
+    01_run_pipeline
+    02_verify_data
+
+Example responsibility:
+
+    from src.pipeline import run_pipeline
+
+    run_pipeline([
+        "Carcharodon carcharias",
+        "Rhincodon typus"
+    ])
+
+Business logic SHALL remain in Python modules.
+
+The initial orchestration mechanism may use a Databricks notebook or Lakeflow Job.
+
+Lakeflow Spark Declarative Pipelines are not required for the Data Ready milestone.
+
+
+18. TESTING STRATEGY
+====================
+
+The existing 201 tests SHALL be treated as a behavioral baseline, not as an immutable
+test-count requirement.
+
+Tests SHALL be divided conceptually into:
+
+A. Domain/behavior tests
+   Preserve whenever possible.
+
+B. Local implementation tests
+   Replace when the underlying implementation is retired.
+
+
+18.1 Tests to preserve/adapt
+----------------------------
+
+- slugify behavior.
+- Wikipedia resolution.
+- direct title.
+- redirects.
+- search fallback.
+- missing page.
+- ambiguous page.
+- disambiguation.
+- HTTP retry behavior.
+- Pydantic contracts.
+- rejection reasons.
+- Wikipedia pivot.
+- strict GBIF taxonomy match.
+- GBIF occurrence aggregation.
+- GBIF_AUGMENTATION_EMPTY.
+- canonical Species construction.
+- canonical section extraction.
+- semantic chunking behavior.
+- seed batch.
+- ad-hoc batch.
+- mixed batch.
+- idempotency.
+- traceability.
+- no invalid Wikipedia species in Gold.
+
+
+18.2 Tests to replace
+---------------------
+
+Replace local infrastructure tests for:
+
+- Bronze JSON file naming/persistence.
+- Silver individual JSON persistence.
+- DuckDB file/schema behavior.
+- DuckDB ON CONFLICT.
+- FAISS index construction.
+- local embedding dimension.
+- metadata.parquet.
+- Docker Compose services.
+- local FAISS search behavior.
+
+with tests for:
+
+- Bronze Delta append.
+- Silver MERGE.
+- quarantine MERGE.
+- content_hash no-op behavior.
+- Gold MERGE.
+- Gold chunk deterministic IDs.
+- Gold chunk size constraints.
+- Unity Catalog table existence.
+- rerun convergence.
+
+
+19. DATA READY ACCEPTANCE CRITERIA
+=================================
+
+The Data Ready phase is complete only when all of the following are demonstrated.
+
+
+19.1 Seed dataset
+-----------------
+
+Running all 18 seed species produces:
+
+    populated Bronze Delta tables
+    populated Silver Delta tables
+    exactly 18 accepted gold.species rows
+    one or more deterministic chunks per accepted Species
+
+
+19.2 Rerun
+----------
+
+Running the same logical seed set again produces:
+
+    Gold new Species              = 0
+    Gold new SpeciesChunks        = 0
+    Gold content hash changes     = 0
+
+Silver MUST similarly avoid logical duplicates.
+
+
+19.3 Ad-hoc species
+-------------------
+
+A species outside the seed set can be requested using only its scientific name.
+
+The pipeline resolves and processes it through:
+
+    Bronze
+        -> Silver
+        -> Gold
+
+without editing a master allow-list.
+
+origin SHALL be:
+
+    AD_HOC
+
+
+19.4 Quarantine
+---------------
+
+A species with invalid Wikipedia resolution SHALL NOT enter Gold.
+
+The rejection SHALL remain inspectable in:
+
+    shark_knowledge.silver.rejected_records
+
+
+19.5 GBIF tolerance
+-------------------
+
+Invalid or missing GBIF augmentation SHALL NOT invalidate an otherwise valid Wikipedia
+species.
+
+The corresponding status SHALL remain explicit.
+
+
+20. FUTURE AI SEARCH PHASE
+==========================
+
+AI Search is intentionally deferred until Data Ready.
+
+The planned serving architecture is:
+
+    shark_knowledge.gold.species_chunks
+        |
+        v
+    Databricks AI Search Delta Sync Index
+
+Gold is the knowledge-base source of truth.
+
+The AI Search index is a derived serving representation.
+
+Therefore:
+
+    Gold != vector index
+
+Instead:
+
+    Gold Delta table
+        -> synchronized search index
+
+This separation allows the index to be rebuilt without losing the knowledge base.
+
+
+20.1 Planned source contract
+----------------------------
+
+Future source table:
+
+    shark_knowledge.gold.species_chunks
+
+Planned primary key:
+
+    chunk_id
+
+Planned embedding source column:
+
+    text
+
+Planned source URI:
+
+    document_uri
+
+Planned metadata filters include:
+
+    kingdom
+    phylum
+    class_name
+    rank
+    taxonomy_status
+    iucn_red_list_category
+    countries
+    year_min
+    year_max
+    augmentation_status
+
+
+20.2 Planned synchronization mode
+---------------------------------
+
+The preferred initial AI Search strategy is:
+
+    Delta Sync
+    Triggered synchronization
+
+Reason:
+
+    the current ingestion architecture is naturally batch-oriented.
+
+Free Edition does not support Direct Vector Access, reinforcing the Delta Sync decision.
+
+
+20.3 Row tracking / change feed preparation
+-------------------------------------------
+
+gold.species_chunks SHOULD be created with row tracking enabled to support future
+incremental change processing.
+
+Example target table property:
+
+    delta.enableRowTracking = true
+
+If the future AI Search configuration requires an explicitly materialized change data feed
+for the chosen runtime/workspace configuration, it SHALL be enabled at implementation
+time.
+
+This SAS does not make the retrieval layer a prerequisite for the Data Ready milestone.
+
+
+21. KNOWLEDGE ASSISTANT PHASE
+=============================
+
+Knowledge Assistant remains the long-term consumer of the Databricks-managed knowledge
+source.
+
+Target conceptual flow:
+
+    gold.species_chunks
+        -> AI Search Index
+        -> Knowledge Source
+        -> Knowledge Assistant
+
+Knowledge Assistant is not supported by Databricks Free Edition as of this SAS revision.
+
+Therefore it SHALL NOT constrain the first Data Ready implementation beyond low-cost
+forward-compatible fields such as:
+
+    document_uri
+    chunk_id
+    text
+    retrieval metadata
+
+
+22. MIGRATION STRATEGY
+======================
+
+The migration SHALL be incremental and conservative.
+
+
+Phase 1 - Databricks setup
+
+    Create catalog and schemas.
+    Verify serverless notebook execution.
+    Verify API outbound connectivity.
+
+
+Phase 2 - Bronze migration
+
+    Keep existing fetcher logic.
+    Replace local JSON persistence with Bronze Delta append.
+    Verify raw audit behavior.
+
+
+Phase 3 - Silver migration
+
+    Keep Pydantic models and validators.
+    Replace valid/rejected JSON persistence with Delta tables.
+    Implement deterministic rejection IDs.
+    Implement content hashes.
+    Implement MERGE behavior.
+
+
+Phase 4 - Gold migration
+
+    Reuse merger.py.
+    Eliminate physical Merge and DuckDB stages.
+    Populate gold.species.
+    Adapt semantic chunking.
+    Populate gold.species_chunks.
+    Eliminate species_catalog and SpeciesMetadata persistence.
+
+
+Phase 5 - Verification
+
+    Run seed batch.
+    Run identical seed batch again.
+    Verify convergence.
+    Run ad-hoc species.
+    Verify quarantine cases.
+    Confirm Data Ready acceptance criteria.
+
+
+Phase 6 - Retrieval
+
+    Only after Data Ready:
+        create AI Search Delta Sync index
+        verify retrieval and filters
+        replace FAISS search behavior
+
+
+Phase 7 - Agent
+
+    Only in a supported Databricks environment:
+        register AI Search as knowledge source
+        configure Knowledge Assistant
+        test grounded answers and citations
+
+
+23. ARCHITECTURAL DECISIONS
+===========================
+
+ADR-V2-001
+----------
+Decision:
+    Databricks Delta Lake + Unity Catalog replace local file persistence and DuckDB.
+
+Rationale:
+    Databricks becomes the system of record for medallion data.
+
+
+ADR-V2-002
+----------
+Decision:
+    Preserve custom Python API ingestion.
+
+Rationale:
+    Wikipedia and GBIF access patterns are domain-specific and already implemented.
+
+
+ADR-V2-003
+----------
+Decision:
+    Preserve Pydantic v2 validation for the initial migration.
+
+Rationale:
+    Existing contracts are tested and stable; replacing validation and storage
+    simultaneously would add unnecessary migration risk.
+
+
+ADR-V2-004
+----------
+Decision:
+    Bronze uses Delta append-only raw tables.
+
+Rationale:
+    Raw history remains reconstructable and auditable.
+
+
+ADR-V2-005
+----------
+Decision:
+    Bronze raw payload is initially stored as STRING JSON.
+
+Rationale:
+    Maximum source fidelity and minimal ingestion transformation.
+
+
+ADR-V2-006
+----------
+Decision:
+    Silver uses current-state Delta tables with MERGE by natural key.
+
+Keys:
+    wikipedia_pages -> species_key
+    gbif_taxonomy   -> species_key
+    gbif_occurrences-> gbif_id
+
+
+ADR-V2-007
+----------
+Decision:
+    Use deterministic content_hash fields.
+
+Rationale:
+    Avoid meaningless updates and prepare for efficient downstream synchronization.
+
+
+ADR-V2-008
+----------
+Decision:
+    Consolidate all rejected records in silver.rejected_records.
+
+Rationale:
+    Central auditability without per-source filesystem structures.
+
+
+ADR-V2-009
+----------
+Decision:
+    Merge remains business logic but ceases to be a physical data layer.
+
+Rationale:
+    It is a Silver-to-Gold transformation, not a distinct data-quality tier.
+
+
+ADR-V2-010
+----------
+Decision:
+    Remove the DuckDB Warehouse stage.
+
+Rationale:
+    Delta managed tables already provide the persistent lakehouse storage layer.
+
+
+ADR-V2-011
+----------
+Decision:
+    gold.species replaces both species_merged and species_catalog.
+
+Rationale:
+    One canonical accepted-species product is sufficient.
+
+
+ADR-V2-012
+----------
+Decision:
+    SpeciesMetadata is no longer persisted separately.
+
+Rationale:
+    Retrieval metadata is denormalized into gold.species_chunks.
+
+
+ADR-V2-013
+----------
+Decision:
+    Preserve section-first semantic chunking.
+
+Rationale:
+    Canonical sections are meaningful knowledge boundaries.
+
+
+ADR-V2-014
+----------
+Decision:
+    Allow multiple chunks per canonical section.
+
+Rationale:
+    Long sections must remain compatible with downstream search/embedding limits.
+
+
+ADR-V2-015
+----------
+Decision:
+    Use 24,000 UTF-8 bytes as the initial maximum text chunk size.
+
+Rationale:
+    Conservative future compatibility margin for AI Search.
+
+
+ADR-V2-016
+----------
+Decision:
+    Retire local BGE embeddings and FAISS in the target runtime.
+
+Rationale:
+    Databricks AI Search will become the retrieval-serving technology.
+
+
+ADR-V2-017
+----------
+Decision:
+    Gold remains the knowledge-base source of truth; AI Search is derived.
+
+Rationale:
+    Search indexes must remain rebuildable.
+
+
+ADR-V2-018
+----------
+Decision:
+    Future AI Search uses Delta Sync rather than Direct Vector Access.
+
+Rationale:
+    Fits batch synchronization and Free Edition constraints.
+
+
+ADR-V2-019
+----------
+Decision:
+    Knowledge Assistant is deferred.
+
+Rationale:
+    The immediate engineering objective is correct, governed data; additionally,
+    Free Edition currently does not support Knowledge Assistant.
+
+
+ADR-V2-020
+----------
+Decision:
+    Lakeflow Spark Declarative Pipelines are deferred.
+
+Rationale:
+    First migration should isolate the storage/platform change from an orchestration
+    paradigm change.
+
+
+ADR-V2-021
+----------
+Decision:
+    Notebooks remain thin.
+
+Rationale:
+    Domain logic stays testable in Python modules.
+
+
+ADR-V2-022
+----------
+Decision:
+    Existing 201 tests are a behavioral baseline, not a fixed v2 test-count target.
+
+Rationale:
+    Tests tied only to retired local technologies must be replaced rather than preserved.
+
+
+24. RISKS AND CONSIDERATIONS
+============================
+
+24.1 Outbound internet
+----------------------
+
+Free Edition restricts outbound internet access by default.
+
+Wikipedia and GBIF connectivity must be tested from the actual workspace.
+
+This is an operational constraint, not a reason to redesign the medallion contracts.
+
+
+24.2 Free Edition quotas
+------------------------
+
+The project must remain small and educational.
+
+The 18-species seed dataset is appropriate for demonstration and verification.
+
+
+24.3 Hash canonicalization
+--------------------------
+
+Hashing must be stable across executions.
+
+Any change to canonical serialization rules is a data-contract change.
+
+
+24.4 Chunk evolution
+--------------------
+
+Changing the chunking algorithm can change chunk IDs and therefore retrieval identity.
+
+Chunking versioning may be introduced later if substantial algorithm changes are required.
+
+
+24.5 Source volatility
+----------------------
+
+Wikipedia and GBIF are external systems.
+
+Bronze history is intentionally preserved so source changes can be audited and downstream
+data rebuilt.
+
+
+24.6 Knowledge Assistant availability
+-------------------------------------
+
+The future Knowledge Assistant phase depends on Databricks feature availability,
+workspace tier and region at implementation time.
+
+The Gold contracts should remain usable independently of that feature.
+
+
+25. DEFINITION OF SUCCESS
+=========================
+
+Shark Knowledge v2 is successful when:
+
+1. The existing domain behavior is preserved.
+2. No local warehouse is needed.
+3. No local vector store is needed for the target architecture.
+4. Bronze, Silver and Gold are persisted as governed Delta tables.
+5. Raw source responses remain auditable.
+6. Invalid records remain explicitly explainable.
+7. Reprocessing converges deterministically.
+8. New species can enter without modifying a closed master list.
+9. Gold exposes a canonical Species product.
+10. Gold exposes an AI-search-ready SpeciesChunks product.
+11. The design remains simple enough to run and study in Databricks Free Edition.
+12. AI Search and Knowledge Assistant can be added without redesigning the Gold model.
+
+
+26. OFFICIAL REFERENCE BASE
+===========================
+
+Databricks Documentation
+------------------------
+
+Medallion Architecture:
+https://docs.databricks.com/gcp/en/lakehouse/medallion
+
+Delta Lake architecture guidance:
+https://docs.databricks.com/aws/en/lakehouse-architecture/deployment-guide/delta-lake
+
+Free Edition:
+https://docs.databricks.com/aws/en/getting-started/free-edition
+
+Free Edition limitations:
+https://docs.databricks.com/aws/en/getting-started/free-edition-limitations
+
+Delta MERGE:
+https://docs.databricks.com/aws/en/delta/merge
+
+Row tracking:
+https://docs.databricks.com/aws/en/tables/features/row-tracking
+
+Change data feed:
+https://docs.databricks.com/gcp/en/tables/features/change-data-feed
+
+AI Search / Vector Search:
+https://docs.databricks.com/aws/en/vector-search/vector-search
+
+AI Search index creation:
+https://docs.databricks.com/aws/en/ai-search/create-ai-search
+
+
+Databricks Academy
+------------------
+
+Get Started with Databricks for Data Engineering:
+https://customer-academy.databricks.com/learn/courses/2469/get-started-with-databricks-for-data-engineering/lessons
+
+Get Started with Databricks for Generative AI:
+https://customer-academy.databricks.com/learn/courses/2724/get-started-with-databricks-for-generative-ai
+
+
+27. SOURCE PROJECT BASELINE
+===========================
+
+This SAS supersedes the local-runtime architecture decisions of Shark Knowledge v1
+while preserving its validated domain rules.
+
+Key v1 concepts retained:
+
+- Species as the business entity.
+- scientific-name-driven open species universe.
+- deterministic species_key.
+- Wikipedia English as mandatory descriptive pivot.
+- GBIF Species Match as taxonomy augmentation.
+- GBIF Occurrence as geographic/conservation augmentation.
+- strict EXACT taxonomy matching.
+- explicit quarantine.
+- deterministic occurrence aggregation.
+- 12-section Canonical Knowledge Model.
+- section-based semantic Parent-Child chunking.
+- explicit provenance.
+- idempotency.
+- auditability.
+- seed / ad-hoc processing.
+
+Key v1 implementation mechanisms retired:
+
+- local Bronze JSON files as primary persistence.
+- individual Silver JSON valid/rejected files.
+- DuckDB warehouse.
+- species_catalog as an independent table.
+- local sentence-transformers runtime.
+- BAAI/bge-small-en-v1.5 as an architecture requirement.
+- FAISS IndexHNSWFlat.
+- FAISS metadata parquet.
+- Docker Compose as the primary runtime topology.
+
+
+28. FINAL TARGET SUMMARY
+========================
+
+Immediate target:
+
+    Wikipedia / GBIF
+          |
+          v
+    Custom Python ingestion
+          |
+          v
+    BRONZE DELTA
+          |
+          v
+    Pydantic validation
+          |
+          v
+    SILVER DELTA
+          |
+          v
+    Python knowledge integration
+          |
+          v
+    GOLD DELTA
+      species
+      species_chunks
+
+Milestone:
+
+    DATA READY
+
+
+Future target:
+
+    gold.species_chunks
+          |
+          v
+    Databricks AI Search
+          |
+          v
+    Knowledge Source
+          |
+          v
+    Knowledge Assistant

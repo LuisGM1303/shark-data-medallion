@@ -1,0 +1,70 @@
+Session 1 - Initializer Agent (v2 Databricks-Centric Evolution)
+================================================================
+Date: 2026-09-30
+
+Pivot (user directive):
+- Everything runs in Databricks Free Edition.
+- All v2 code lives in a new folder: databricks-centric/.
+- Delivery is via granular notebooks the user copies into Databricks and runs
+  through the UI. Business logic stays in Python modules; notebooks stay thin.
+
+Accomplished:
+- Read and analyzed docs/specs/app_specs.txt (v1) and docs/specs/app_specs_v2.txt (v2).
+- Created docs/features/v2_evolution_feature_list.json with 224 end-to-end test
+  cases (all "passes": false), covering:
+  * config (13): seed species, catalog/schema names, batch_id/run_id, content_hash
+  * resolver (12): slugify, Wikipedia resolution, retry, User-Agent
+  * bronze (23): fetchers, 3 Delta raw tables, append-only, raw_payload STRING
+  * silver (50): Pydantic models, rejection reasons, content_hash, MERGE, rejected_records
+  * merge (14): Wikipedia pivot, GBIF augmentation, occurrence aggregation
+  * gold (33): species, species_chunks, 12 canonical sections, chunking, MAX_CHUNK_BYTES
+  * storage (14): delta.py functions, MERGE semantics, content_hash no-op
+  * idempotency (12): bronze append, silver/gold convergence, content-aware
+  * unity_catalog (8): catalog/schema/table existence, managed tables
+  * notebooks (10): thin notebooks, 00_setup/01_run/02_verify
+  * data_ready (15): seed 18, rerun 0, ad-hoc, quarantine, GBIF tolerance
+  * migration (10): retired v1 components (DuckDB, FAISS, Docker, etc.)
+  * future_ai_search (10): forward-compatible fields, Delta Sync, row tracking
+
+- Created the databricks-centric/ project structure:
+  * src/config/seed_species.py        (18 seed species + catalog/schema constants)
+  * src/resolver/slugify.py           (deterministic species_key)
+  * src/resolver/wikipedia.py         (direct/redirect/search/disambiguation)
+  * src/bronze/fetcher.py             (GBIF + Wikipedia connectors, retry)
+  * src/silver/models.py              (Pydantic v2 contracts)
+  * src/silver/validator.py           (validation + explicit rejection reasons)
+  * src/merge/merger.py               (Wikipedia pivot + GBIF augmentation)
+  * src/gold/models.py                (canonical sections + Species/Chunk models)
+  * src/gold/chunker.py               (semantic section-first chunking, MAX_CHUNK_BYTES=24000)
+  * src/storage/hashing.py            (content_hash, record_hash, rejection_id)
+  * src/storage/delta.py              (Delta append + MERGE, Unity Catalog DDL)
+  * src/pipeline.py                   (end-to-end orchestration)
+  * notebooks/00_bootstrap.py         (deps + sys.path + catalog/schema setup)
+  * notebooks/01_run_pipeline.py      (seed batch)
+  * notebooks/02_verify_data.py       (Data Ready acceptance criteria)
+  * notebooks/03_ad_hoc.py            (ad-hoc species, origin=AD_HOC)
+  * notebooks/04_quarantine.py        (invalid Wikipedia -> quarantine)
+  * README.md                         (Databricks usage instructions)
+  * init.sh                           (local venv for optional testing + instructions)
+
+- Verified pure-Python modules locally (slugify, content_hash determinism,
+  merge, chunking, validators, rejection reasons) — all smoke tests pass.
+- Verified all files compile (py_compile).
+
+Design decisions:
+- content_hash: SHA-256 over canonical JSON (sort_keys, UTF-8, stable NULL,
+  deterministic list order); operational fields excluded by the caller.
+- rejection_id: SHA256(source | natural_key | reason | record_hash).
+- Bronze: append-only, raw_payload STRING. Silver/Gold: MERGE by natural key
+  with "WHEN MATCHED AND content_hash <> THEN UPDATE" (content-aware no-op).
+- gold.species replaces species_catalog; SpeciesMetadata denormalized into
+  gold.species_chunks; species_chunks created with delta.enableRowTracking=true.
+- Notebooks use %run ./00_bootstrap for shared setup; src/ wired via sys.path
+  with auto-detection of the workspace path (manual fallback documented).
+
+Next steps (future sessions):
+- Run notebooks in Databricks Free Edition and verify outbound connectivity.
+- Mark feature_list.json entries "passes": true as they are verified in Databricks.
+- Confirm 18 gold.species, rerun convergence, ad-hoc and quarantine behavior.
+
+Current completion status: 0/224 features verified (all pending Databricks execution).

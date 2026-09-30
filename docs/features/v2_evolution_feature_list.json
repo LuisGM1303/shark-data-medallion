@@ -1,0 +1,2466 @@
+[
+  {
+    "category": "config",
+    "description": "seed_species.py exists and defines exactly 18 seed species as demonstration inputs (not an access-control list)",
+    "steps": [
+      "Step 1: Import SEED_SPECIES from config.seed_species",
+      "Step 2: Verify SEED_SPECIES is a list",
+      "Step 3: Assert len(SEED_SPECIES) == 18",
+      "Step 4: Verify each entry has species_key, scientific_name, wikipedia_title"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Each seed species entry has a species_key equal to slugify(scientific_name)",
+    "steps": [
+      "Step 1: For each species in SEED_SPECIES, compute slugify(scientific_name)",
+      "Step 2: Assert species_key == slugify(scientific_name)",
+      "Step 3: Verify species_key is lowercase with underscores",
+      "Step 4: Verify no special characters in species_key"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Each seed species has a valid binomial scientific_name",
+    "steps": [
+      "Step 1: Verify each scientific_name has exactly two words (genus + species)",
+      "Step 2: Verify genus is capitalized",
+      "Step 3: Verify species epithet is lowercase",
+      "Step 4: Verify no trailing/leading whitespace"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Each seed species has a non-empty English wikipedia_title",
+    "steps": [
+      "Step 1: Assert wikipedia_title is a non-empty string for each species",
+      "Step 2: Verify title uses spaces (not underscores)",
+      "Step 3: Verify title is in English",
+      "Step 4: Verify title matches Wikipedia page naming convention"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Unity Catalog catalog name is shark_knowledge",
+    "steps": [
+      "Step 1: Inspect config constants for catalog name",
+      "Step 2: Assert catalog == 'shark_knowledge'",
+      "Step 3: Verify catalog is referenced consistently across storage module",
+      "Step 4: Verify no hardcoded alternative catalog names"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Three schemas are defined: bronze, silver, gold under shark_knowledge",
+    "steps": [
+      "Step 1: Inspect config constants for schema names",
+      "Step 2: Assert schemas == ['bronze', 'silver', 'gold']",
+      "Step 3: Verify full names are shark_knowledge.bronze, shark_knowledge.silver, shark_knowledge.gold",
+      "Step 4: Verify no separate catalog per medallion layer"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "batch_id and run_id are distinct concepts (logical batch vs physical execution)",
+    "steps": [
+      "Step 1: Inspect pipeline signature for batch_id and run_id",
+      "Step 2: Verify batch_id identifies a logical requested batch",
+      "Step 3: Verify run_id identifies one physical execution (UUID)",
+      "Step 4: Verify repeated execution of same batch yields different run_id"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "run_id is generated as a UUID per physical execution",
+    "steps": [
+      "Step 1: Run pipeline twice with the same batch_id",
+      "Step 2: Capture run_id from each execution",
+      "Step 3: Assert the two run_ids differ",
+      "Step 4: Verify run_id is a valid UUID string"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "content_hash uses deterministic SHA-256",
+    "steps": [
+      "Step 1: Compute content_hash for a fixed business-field dict",
+      "Step 2: Assert output is a 64-char hex string",
+      "Step 3: Verify same input produces same hash across executions",
+      "Step 4: Verify hash uses SHA-256 algorithm"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "content_hash excludes operational fields (run_id, validated_at, timestamps)",
+    "steps": [
+      "Step 1: Compute content_hash for a record with and without run_id",
+      "Step 2: Assert both hashes are equal",
+      "Step 3: Compute with and without validated_at and assert equal",
+      "Step 4: Verify only business fields affect the hash"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Canonical serialization uses UTF-8, stable field ordering, stable NULL representation",
+    "steps": [
+      "Step 1: Serialize a dict with keys in different insertion orders",
+      "Step 2: Assert both serializations produce identical hash",
+      "Step 3: Verify None values serialize deterministically",
+      "Step 4: Verify non-ASCII characters are handled via UTF-8"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Allowed origin values are SEED and AD_HOC",
+    "steps": [
+      "Step 1: Inspect origin assignment logic",
+      "Step 2: Verify seed species get origin='SEED'",
+      "Step 3: Verify non-seed species get origin='AD_HOC'",
+      "Step 4: Verify no other origin values are produced"
+    ],
+    "passes": false
+  },
+  {
+    "category": "config",
+    "description": "Allowed taxonomy_status values are MATCHED and UNMATCHED; augmentation_status OK and GBIF_AUGMENTATION_EMPTY",
+    "steps": [
+      "Step 1: Inspect merge logic for status enums",
+      "Step 2: Verify taxonomy_status is MATCHED or UNMATCHED",
+      "Step 3: Verify augmentation_status is OK or GBIF_AUGMENTATION_EMPTY",
+      "Step 4: Verify no other status values are produced"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "slugify converts scientific names to species_key deterministically",
+    "steps": [
+      "Step 1: Call slugify('Carcharodon carcharias')",
+      "Step 2: Assert result is 'carcharodon_carcharias'",
+      "Step 3: Verify output is lowercase with underscores",
+      "Step 4: Verify slugify('Prionace glauca') == 'prionace_glauca'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "slugify handles multi-word scientific names correctly",
+    "steps": [
+      "Step 1: Call slugify('Carcharodon carcharias')",
+      "Step 2: Assert result is 'carcharodon_carcharias'",
+      "Step 3: Verify no extra characters or spaces remain",
+      "Step 4: Verify all 18 seed species keys are producible via slugify"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "slugify handles None input gracefully",
+    "steps": [
+      "Step 1: Call slugify(None)",
+      "Step 2: Assert result is empty string",
+      "Step 3: Verify no exception is raised",
+      "Step 4: Verify slugify('') == ''"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia resolution returns DIRECT_TITLE for exact title match",
+    "steps": [
+      "Step 1: Call resolve_wikipedia_title('Great white shark')",
+      "Step 2: Verify status is SUCCESS",
+      "Step 3: Assert resolved_via == DIRECT_TITLE",
+      "Step 4: Verify title and page_url are populated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia resolution follows redirects and returns REDIRECT",
+    "steps": [
+      "Step 1: Call resolve_wikipedia_title with a known redirect title",
+      "Step 2: Verify function follows redirect",
+      "Step 3: Assert resolved_via == REDIRECT",
+      "Step 4: Verify final title is the canonical article title"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia resolution uses search fallback when direct title fails",
+    "steps": [
+      "Step 1: Call resolve_wikipedia_title with a scientific name (not a title)",
+      "Step 2: Verify function searches Wikipedia API",
+      "Step 3: Assert resolved_via == SEARCH",
+      "Step 4: Verify returned page_url is valid"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia resolution returns PAGE_NOT_FOUND when no article exists",
+    "steps": [
+      "Step 1: Call resolve_wikipedia_title with a nonexistent title",
+      "Step 2: Verify status is PAGE_NOT_FOUND",
+      "Step 3: Assert no title is returned",
+      "Step 4: Verify error is documented for quarantine"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia resolution detects disambiguation pages",
+    "steps": [
+      "Step 1: Call resolve_wikipedia_title with a disambiguation page title",
+      "Step 2: Verify is_disambiguation flag is True",
+      "Step 3: Assert status is DISAMBIGUATION_PAGE",
+      "Step 4: Verify disambiguation page is rejected, not accepted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia resolution detects ambiguous results and sets AMBIGUOUS_RESOLUTION",
+    "steps": [
+      "Step 1: Call resolve_wikipedia_title with a name mapping to multiple candidates",
+      "Step 2: Verify status is AMBIGUOUS_RESOLUTION",
+      "Step 3: Assert no title is returned",
+      "Step 4: Verify candidates are logged for debugging"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "resolved_via only ever takes DIRECT_TITLE, SEARCH, or REDIRECT",
+    "steps": [
+      "Step 1: Inspect ResolutionMethod enum",
+      "Step 2: Assert members are DIRECT_TITLE, SEARCH, REDIRECT",
+      "Step 3: Verify no other resolved_via values are emitted",
+      "Step 4: Verify silver.wikipedia_pages.resolved_via accepts only these"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia requests use retry with exponential backoff on 429",
+    "steps": [
+      "Step 1: Inspect request helper in resolver",
+      "Step 2: Verify 429 responses trigger retry",
+      "Step 3: Verify backoff wait is 2**attempt",
+      "Step 4: Verify max_retries is bounded"
+    ],
+    "passes": false
+  },
+  {
+    "category": "resolver",
+    "description": "Wikipedia requests include a User-Agent header",
+    "steps": [
+      "Step 1: Inspect request helper headers",
+      "Step 2: Verify User-Agent header is present",
+      "Step 3: Verify header identifies the educational project",
+      "Step 4: Verify header is applied to all Wikipedia calls"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "GBIF Species Match endpoint is used for taxonomy ingestion",
+    "steps": [
+      "Step 1: Inspect bronze fetcher for GBIF Species Match URL",
+      "Step 2: Verify URL is https://api.gbif.org/v1/species/match",
+      "Step 3: Verify name parameter is passed",
+      "Step 4: Verify response is returned as raw dict"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "GBIF Occurrence Search endpoint uses scientificName, hasCoordinate=true, limit=50",
+    "steps": [
+      "Step 1: Inspect bronze fetcher for occurrence params",
+      "Step 2: Verify scientificName parameter",
+      "Step 3: Verify hasCoordinate=true",
+      "Step 4: Verify limit=50"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Wikipedia summary endpoint is used via REST API",
+    "steps": [
+      "Step 1: Inspect bronze fetcher for summary URL",
+      "Step 2: Verify URL is https://en.wikipedia.org/api/rest_v1/page/summary/{title}",
+      "Step 3: Verify title spaces are replaced with underscores",
+      "Step 4: Verify response is returned as raw dict"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Wikipedia full extracts endpoint uses action API with explaintext=true",
+    "steps": [
+      "Step 1: Inspect bronze fetcher for extracts URL",
+      "Step 2: Verify action=query, prop=extracts, explaintext=true",
+      "Step 3: Verify titles parameter is passed",
+      "Step 4: Verify format=json"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "bronze.wikipedia_raw Delta table exists in shark_knowledge.bronze",
+    "steps": [
+      "Step 1: Run setup notebook to create catalog/schemas/tables",
+      "Step 2: Query catalog for shark_knowledge.bronze.wikipedia_raw",
+      "Step 3: Assert table exists",
+      "Step 4: Verify table is a Delta managed table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "bronze.gbif_taxonomy_raw Delta table exists in shark_knowledge.bronze",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query catalog for shark_knowledge.bronze.gbif_taxonomy_raw",
+      "Step 3: Assert table exists",
+      "Step 4: Verify table is a Delta managed table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "bronze.gbif_occurrence_raw Delta table exists in shark_knowledge.bronze",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query catalog for shark_knowledge.bronze.gbif_occurrence_raw",
+      "Step 3: Assert table exists",
+      "Step 4: Verify table is a Delta managed table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze raw_payload is stored as STRING containing the complete raw JSON/envelope",
+    "steps": [
+      "Step 1: Inspect bronze table schema",
+      "Step 2: Verify raw_payload column type is STRING",
+      "Step 3: Verify raw_payload contains full JSON envelope",
+      "Step 4: Verify no semantic parsing happens in Bronze"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze tables are append-only",
+    "steps": [
+      "Step 1: Inspect bronze write logic",
+      "Step 2: Verify write mode is append",
+      "Step 3: Verify no MERGE/UPDATE/DELETE on bronze tables",
+      "Step 4: Verify rerun appends new rows rather than overwriting"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "bronze.wikipedia_raw granularity is one row per species fetch attempt per physical run",
+    "steps": [
+      "Step 1: Run bronze ingestion for one species",
+      "Step 2: Query wikipedia_raw for that species",
+      "Step 3: Verify one row per fetch attempt",
+      "Step 4: Verify rerun produces additional rows (new run_id)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "bronze.gbif_taxonomy_raw granularity is one row per species Match API fetch attempt per run",
+    "steps": [
+      "Step 1: Run bronze ingestion for one species",
+      "Step 2: Query gbif_taxonomy_raw for that species",
+      "Step 3: Verify one row per fetch attempt",
+      "Step 4: Verify rerun produces additional rows"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "bronze.gbif_occurrence_raw granularity is one row per species Occurrence Search fetch attempt per run",
+    "steps": [
+      "Step 1: Run bronze ingestion for one species",
+      "Step 2: Query gbif_occurrence_raw for that species",
+      "Step 3: Verify one row per fetch attempt",
+      "Step 4: Verify a single payload may contain 0..N occurrence records"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "bronze.wikipedia_raw has required fields ingestion_id, run_id, batch_id, species_key, scientific_name, raw_payload, ingested_at",
+    "steps": [
+      "Step 1: Inspect wikipedia_raw schema",
+      "Step 2: Verify ingestion_id STRING NOT NULL",
+      "Step 3: Verify run_id, batch_id, species_key, scientific_name STRING NOT NULL",
+      "Step 4: Verify raw_payload STRING NOT NULL and ingested_at TIMESTAMP NOT NULL"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "bronze.gbif_taxonomy_raw has required fields ingestion_id, run_id, batch_id, species_key, scientific_name, raw_payload, ingested_at",
+    "steps": [
+      "Step 1: Inspect gbif_taxonomy_raw schema",
+      "Step 2: Verify ingestion_id STRING NOT NULL",
+      "Step 3: Verify run_id, batch_id, species_key, scientific_name STRING NOT NULL",
+      "Step 4: Verify raw_payload STRING NOT NULL and ingested_at TIMESTAMP NOT NULL"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "bronze.gbif_occurrence_raw has required fields ingestion_id, run_id, batch_id, species_key, scientific_name, raw_payload, ingested_at",
+    "steps": [
+      "Step 1: Inspect gbif_occurrence_raw schema",
+      "Step 2: Verify ingestion_id STRING NOT NULL",
+      "Step 3: Verify run_id, batch_id, species_key, scientific_name STRING NOT NULL",
+      "Step 4: Verify raw_payload STRING NOT NULL and ingested_at TIMESTAMP NOT NULL"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze ingestion_id is a unique identifier per raw row",
+    "steps": [
+      "Step 1: Run bronze ingestion for a batch",
+      "Step 2: Query ingestion_id values",
+      "Step 3: Verify each row has a unique ingestion_id",
+      "Step 4: Verify ingestion_id is deterministic or UUID-based as designed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze persists HTTP errors as data (errors are data)",
+    "steps": [
+      "Step 1: Simulate an HTTP error from a source API",
+      "Step 2: Verify a bronze row is still written",
+      "Step 3: Assert raw_payload contains the error response",
+      "Step 4: Verify envelope metadata is still populated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze persists empty responses as data",
+    "steps": [
+      "Step 1: Fetch a source that returns an empty result",
+      "Step 2: Verify a bronze row is written",
+      "Step 3: Assert raw_payload contains the empty response",
+      "Step 4: Verify no transformation is applied"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze is reconstructable and audit-oriented",
+    "steps": [
+      "Step 1: Run bronze ingestion for a batch",
+      "Step 2: Verify raw_payload can be deserialized back to the original response",
+      "Step 3: Verify run_id/batch_id allow tracing to a specific execution",
+      "Step 4: Verify no information is lost in Bronze"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze is not semantically validated",
+    "steps": [
+      "Step 1: Inspect bronze write path",
+      "Step 2: Verify no Pydantic validation occurs in Bronze",
+      "Step 3: Verify no field-level parsing/coercion in Bronze",
+      "Step 4: Verify Silver owns semantic parsing and validation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Re-running the same logical batch appends new Bronze observations",
+    "steps": [
+      "Step 1: Run bronze ingestion for a batch",
+      "Step 2: Record row count",
+      "Step 3: Re-run the same batch",
+      "Step 4: Verify row count increased (append-only audit trail)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze raw_payload preserves the complete JSON envelope from the fetcher",
+    "steps": [
+      "Step 1: Inspect fetcher return shape",
+      "Step 2: Verify fetcher returns {status, data} envelope",
+      "Step 3: Verify raw_payload stores the full envelope as JSON string",
+      "Step 4: Verify no fields are dropped"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bronze",
+    "description": "Bronze fetchers apply retry with exponential backoff on 429",
+    "steps": [
+      "Step 1: Inspect bronze fetcher request helper",
+      "Step 2: Verify 429 triggers retry",
+      "Step 3: Verify backoff is exponential",
+      "Step 4: Verify retries are bounded"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage Pydantic model validates species_key as string",
+    "steps": [
+      "Step 1: Create WikipediaPage with valid species_key",
+      "Step 2: Verify model is valid",
+      "Step 3: Create WikipediaPage without species_key",
+      "Step 4: Assert validation error is raised"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage Pydantic model validates title as non-empty string",
+    "steps": [
+      "Step 1: Create WikipediaPage with valid title",
+      "Step 2: Create WikipediaPage with empty title",
+      "Step 3: Assert validation error for empty title",
+      "Step 4: Verify title is stored correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage Pydantic model validates resolved_via field",
+    "steps": [
+      "Step 1: Create WikipediaPage with resolved_via='DIRECT_TITLE'",
+      "Step 2: Create WikipediaPage with resolved_via='SEARCH'",
+      "Step 3: Create WikipediaPage with resolved_via='REDIRECT'",
+      "Step 4: Verify all three are accepted"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage extract validation requires minimum 50 characters",
+    "steps": [
+      "Step 1: Create WikipediaPage with extract < 50 characters",
+      "Step 2: Verify validation error for EXTRACT_TOO_SHORT",
+      "Step 3: Create WikipediaPage with extract >= 50 characters",
+      "Step 4: Verify passes validation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage validates sections_text as string",
+    "steps": [
+      "Step 1: Create WikipediaPage with valid sections_text",
+      "Step 2: Create WikipediaPage with empty sections_text",
+      "Step 3: Assert MISSING_SECTIONS_TEXT rejection",
+      "Step 4: Verify sections with content pass validation"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage validates page_url as valid URL",
+    "steps": [
+      "Step 1: Create WikipediaPage with valid Wikipedia URL",
+      "Step 2: Verify URL is accepted",
+      "Step 3: Create WikipediaPage with invalid URL",
+      "Step 4: Assert validation error"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "WikipediaPage is_disambiguation field defaults to False",
+    "steps": [
+      "Step 1: Create WikipediaPage without specifying is_disambiguation",
+      "Step 2: Assert is_disambiguation is False",
+      "Step 3: Create WikipediaPage with is_disambiguation=True",
+      "Step 4: Verify boolean field is stored correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy model validates usage_key as int",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with valid usage_key integer",
+      "Step 2: Create GBIFTaxonomy with non-integer usage_key",
+      "Step 3: Assert validation error for non-integer",
+      "Step 4: Verify usage_key is stored correctly"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy model validates scientific_name and canonical_name",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with valid names",
+      "Step 2: Assert passes validation",
+      "Step 3: Create with empty scientific_name",
+      "Step 4: Assert validation error"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy model validates rank field",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with valid rank (e.g. 'SPECIES')",
+      "Step 2: Verify rank is accepted",
+      "Step 3: Assert rank is stored as string",
+      "Step 4: Verify rank can be None if not provided"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy model validates match_type field",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with match_type='EXACT'",
+      "Step 2: Create GBIFTaxonomy with match_type='FUZZY'",
+      "Step 3: Verify both are valid Pydantic models",
+      "Step 4: Assert match_type is stored as string"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy model validates confidence as int",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with confidence=100",
+      "Step 2: Assert passes validation",
+      "Step 3: Create with negative confidence",
+      "Step 4: Assert validation error or behavior is defined"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFTaxonomy accepts optional kingdom, phylum, class_name",
+    "steps": [
+      "Step 1: Create GBIFTaxonomy with kingdom, phylum, class_name provided",
+      "Step 2: Assert passes validation",
+      "Step 3: Create without these optional fields",
+      "Step 4: Verify defaults to None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model validates gbif_id as int (natural key)",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with valid int gbif_id",
+      "Step 2: Create GBIFOccurrence without gbif_id",
+      "Step 3: Assert MISSING_GBIF_ID rejection",
+      "Step 4: Create with non-int gbif_id and assert error"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model validates decimal_latitude in range [-90, 90]",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with decimal_latitude=45.0",
+      "Step 2: Assert passes",
+      "Step 3: Create with decimal_latitude=100.0",
+      "Step 4: Assert COORDINATES_OUT_OF_RANGE"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model validates decimal_longitude in range [-180, 180]",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with decimal_longitude=90.0",
+      "Step 2: Assert passes",
+      "Step 3: Create with decimal_longitude=200.0",
+      "Step 4: Assert COORDINATES_OUT_OF_RANGE"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model validates basis_of_record as string",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with valid basis_of_record",
+      "Step 2: Assert passes",
+      "Step 3: Create without basis_of_record",
+      "Step 4: Assert MISSING_BASIS_OF_RECORD"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "GBIFOccurrence model accepts optional country, event_date, iucn_red_list_category, coordinate_uncertainty_m",
+    "steps": [
+      "Step 1: Create GBIFOccurrence with all optional fields",
+      "Step 2: Assert passes",
+      "Step 3: Create without optional fields",
+      "Step 4: Verify they default to None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects PAGE_NOT_FOUND and documents reason",
+    "steps": [
+      "Step 1: Process a Wikipedia page that does not exist",
+      "Step 2: Verify rejection reason is PAGE_NOT_FOUND",
+      "Step 3: Assert rejection is written to rejected_records",
+      "Step 4: Verify rejection contains enough context to diagnose"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects AMBIGUOUS_RESOLUTION and documents reason",
+    "steps": [
+      "Step 1: Process a species name mapping to multiple Wikipedia candidates",
+      "Step 2: Verify rejection reason is AMBIGUOUS_RESOLUTION",
+      "Step 3: Assert rejection is written with details",
+      "Step 4: Verify multiple candidate titles are documented"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects EXTRACT_TOO_SHORT and documents reason",
+    "steps": [
+      "Step 1: Process a Wikipedia page with extract under 50 chars",
+      "Step 2: Verify rejection reason is EXTRACT_TOO_SHORT",
+      "Step 3: Assert extract length is documented",
+      "Step 4: Verify rejection is written to rejected_records"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects DISAMBIGUATION_PAGE and documents reason",
+    "steps": [
+      "Step 1: Process a Wikipedia page that is a disambiguation page",
+      "Step 2: Verify rejection reason is DISAMBIGUATION_PAGE",
+      "Step 3: Assert disambiguation flag is documented",
+      "Step 4: Verify rejection includes original page metadata"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects HTTP_ERROR and documents reason",
+    "steps": [
+      "Step 1: Simulate HTTP error from Wikipedia API",
+      "Step 2: Verify rejection reason is HTTP_ERROR",
+      "Step 3: Assert HTTP status code is documented",
+      "Step 4: Verify rejection is written"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver Wikipedia rejects MISSING_SECTIONS_TEXT and documents reason",
+    "steps": [
+      "Step 1: Process Wikipedia page that returns no sections text",
+      "Step 2: Verify rejection reason is MISSING_SECTIONS_TEXT",
+      "Step 3: Assert rejection is written",
+      "Step 4: Verify context about missing sections is included"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Taxonomy rejects MATCH_TYPE_NOT_EXACT when match_type != 'EXACT'",
+    "steps": [
+      "Step 1: Process GBIF taxonomy with match_type='FUZZY'",
+      "Step 2: Verify rejection reason is MATCH_TYPE_NOT_EXACT",
+      "Step 3: Assert species is marked UNMATCHED",
+      "Step 4: Verify rejection is written"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Taxonomy rejects NO_MATCH_RETURNED when GBIF returns no candidates",
+    "steps": [
+      "Step 1: Query GBIF Species Match with a nonexistent species name",
+      "Step 2: Verify rejection reason is NO_MATCH_RETURNED",
+      "Step 3: Assert rejection is written",
+      "Step 4: Verify context is documented"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Taxonomy rejects HTTP_ERROR on API failure",
+    "steps": [
+      "Step 1: Simulate HTTP error from GBIF Species Match",
+      "Step 2: Verify rejection reason is HTTP_ERROR",
+      "Step 3: Assert HTTP status code is documented",
+      "Step 4: Verify rejection is written"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Occurrence rejects MISSING_COORDINATES when lat/lon is null",
+    "steps": [
+      "Step 1: Process occurrence with null decimal_latitude",
+      "Step 2: Verify rejection reason is MISSING_COORDINATES",
+      "Step 3: Assert rejection is written",
+      "Step 4: Verify occurrence context is preserved"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Occurrence rejects COORDINATES_OUT_OF_RANGE for invalid lat/lon",
+    "steps": [
+      "Step 1: Process occurrence with decimal_latitude=95.0",
+      "Step 2: Verify rejection reason is COORDINATES_OUT_OF_RANGE",
+      "Step 3: Assert rejection is written",
+      "Step 4: Process occurrence with decimal_longitude=200.0 and verify same"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Occurrence rejects MISSING_GBIF_ID when gbif_id is null",
+    "steps": [
+      "Step 1: Process occurrence without gbifID",
+      "Step 2: Verify rejection reason is MISSING_GBIF_ID",
+      "Step 3: Assert rejection is written",
+      "Step 4: Verify occurrence data is preserved"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Occurrence rejects INVALID_EVENT_DATE for unparseable dates",
+    "steps": [
+      "Step 1: Process occurrence with eventDate='not-a-date'",
+      "Step 2: Verify rejection reason is INVALID_EVENT_DATE",
+      "Step 3: Assert rejection is written",
+      "Step 4: Process occurrence with null eventDate (should be allowed)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver GBIF Occurrence rejects MISSING_BASIS_OF_RECORD",
+    "steps": [
+      "Step 1: Process occurrence with null/empty basisOfRecord",
+      "Step 2: Verify rejection reason is MISSING_BASIS_OF_RECORD",
+      "Step 3: Assert rejection is written",
+      "Step 4: Verify original fields preserved"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "silver.wikipedia_pages Delta table exists in shark_knowledge.silver",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query catalog for shark_knowledge.silver.wikipedia_pages",
+      "Step 3: Assert table exists",
+      "Step 4: Verify it is a Delta managed table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "silver.gbif_taxonomy Delta table exists in shark_knowledge.silver",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query catalog for shark_knowledge.silver.gbif_taxonomy",
+      "Step 3: Assert table exists",
+      "Step 4: Verify it is a Delta managed table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "silver.gbif_occurrences Delta table exists in shark_knowledge.silver",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query catalog for shark_knowledge.silver.gbif_occurrences",
+      "Step 3: Assert table exists",
+      "Step 4: Verify it is a Delta managed table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "silver.rejected_records Delta table exists in shark_knowledge.silver",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query catalog for shark_knowledge.silver.rejected_records",
+      "Step 3: Assert table exists",
+      "Step 4: Verify it is a Delta managed table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "silver.wikipedia_pages logical primary key is species_key",
+    "steps": [
+      "Step 1: Inspect wikipedia_pages schema/docs",
+      "Step 2: Verify species_key is the documented logical PK",
+      "Step 3: Verify MERGE uses species_key as join key",
+      "Step 4: Verify one current row per species_key"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "silver.gbif_taxonomy logical primary key is species_key",
+    "steps": [
+      "Step 1: Inspect gbif_taxonomy schema/docs",
+      "Step 2: Verify species_key is the documented logical PK",
+      "Step 3: Verify MERGE uses species_key as join key",
+      "Step 4: Verify one current row per species_key"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "silver.gbif_occurrences logical primary key is gbif_id",
+    "steps": [
+      "Step 1: Inspect gbif_occurrences schema/docs",
+      "Step 2: Verify gbif_id is the documented logical PK",
+      "Step 3: Verify MERGE uses gbif_id as join key",
+      "Step 4: Verify one valid occurrence per row"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "silver.rejected_records logical primary key is rejection_id",
+    "steps": [
+      "Step 1: Inspect rejected_records schema/docs",
+      "Step 2: Verify rejection_id is the documented logical PK",
+      "Step 3: Verify MERGE uses rejection_id as join key",
+      "Step 4: Verify rejection_id is deterministic"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver records include a content_hash field",
+    "steps": [
+      "Step 1: Inspect silver table schemas",
+      "Step 2: Verify content_hash STRING NOT NULL present",
+      "Step 3: Verify content_hash is SHA-256 hex",
+      "Step 4: Verify content_hash excludes operational fields"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver records include a validated_at timestamp field",
+    "steps": [
+      "Step 1: Inspect silver table schemas",
+      "Step 2: Verify validated_at TIMESTAMP NOT NULL present",
+      "Step 3: Verify validated_at is populated on write",
+      "Step 4: Verify validated_at is excluded from content_hash"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver records include a source_ingestion_id field for lineage",
+    "steps": [
+      "Step 1: Inspect silver table schemas",
+      "Step 2: Verify source_ingestion_id STRING NOT NULL present",
+      "Step 3: Verify it references the Bronze ingestion_id",
+      "Step 4: Verify lineage from Bronze to Silver is traceable"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver tables use MERGE on natural key",
+    "steps": [
+      "Step 1: Inspect storage/delta.py silver write functions",
+      "Step 2: Verify MERGE INTO ... ON natural key",
+      "Step 3: Verify WHEN MATCHED and WHEN NOT MATCHED clauses",
+      "Step 4: Verify update condition uses content_hash"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Silver updates a record only when content_hash changes",
+    "steps": [
+      "Step 1: Write a silver record",
+      "Step 2: Re-write identical record (same content_hash)",
+      "Step 3: Verify no update occurs (no-op)",
+      "Step 4: Re-write with changed business field and verify update"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "rejection_id is deterministic",
+    "steps": [
+      "Step 1: Compute rejection_id for a given source+key+reason+hash",
+      "Step 2: Compute again with same inputs",
+      "Step 3: Assert both are equal",
+      "Step 4: Verify different inputs produce different ids"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "rejection_id is SHA256(source + natural key + rejection_reason + record_hash)",
+    "steps": [
+      "Step 1: Inspect rejection_id computation",
+      "Step 2: Verify it combines source, natural/business key, rejection_reason, record_hash",
+      "Step 3: Verify SHA-256 is used",
+      "Step 4: Verify output is a 64-char hex string"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "silver.rejected_records has all required fields",
+    "steps": [
+      "Step 1: Inspect rejected_records schema",
+      "Step 2: Verify rejection_id, run_id, batch_id, source, rejection_reason, record_payload, record_hash, rejected_at",
+      "Step 3: Verify optional species_key, natural_key, rejection_detail, source_ingestion_id",
+      "Step 4: Verify all NOT NULL constraints are correct"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "silver.rejected_records uses MERGE on rejection_id",
+    "steps": [
+      "Step 1: Inspect storage/delta.py merge_rejected_records",
+      "Step 2: Verify MERGE INTO ... ON rejection_id",
+      "Step 3: Verify WHEN MATCHED and WHEN NOT MATCHED clauses",
+      "Step 4: Verify no uncontrolled duplicate quarantine records"
+    ],
+    "passes": false
+  },
+  {
+    "category": "silver",
+    "description": "Repeated processing of the same invalid record does not create duplicate quarantine records",
+    "steps": [
+      "Step 1: Process an invalid record",
+      "Step 2: Record rejected_records count",
+      "Step 3: Re-process the same invalid record",
+      "Step 4: Verify rejected_records count is unchanged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Wikipedia is the mandatory pivot (1:1 cardinality per species)",
+    "steps": [
+      "Step 1: Run merge on a species with valid Wikipedia data",
+      "Step 2: Verify merge output includes Wikipedia fields",
+      "Step 3: Run merge trying to introduce species without Wikipedia",
+      "Step 4: Assert species is not added to Gold"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Species without valid Wikipedia are not inserted into Gold",
+    "steps": [
+      "Step 1: Attempt merge for a species with no valid Wikipedia page",
+      "Step 2: Verify species_key is NOT in gold.species after merge",
+      "Step 3: Assert warning is documented",
+      "Step 4: Verify species can be retried in a future batch"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "GBIF never introduces a species_key that does not exist in Wikipedia",
+    "steps": [
+      "Step 1: Provide only GBIF data (no Wikipedia) for an unknown species",
+      "Step 2: Verify merge does not create a new species_key",
+      "Step 3: Assert gold.species is unchanged",
+      "Step 4: Verify pipeline continues processing other species"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "GBIF Taxonomy joined by species_key only when match_type is EXACT",
+    "steps": [
+      "Step 1: Process species with valid Wikipedia + GBIF EXACT match",
+      "Step 2: Verify taxonomy fields (kingdom, phylum, class, rank) are populated",
+      "Step 3: Assert taxonomy_status = 'MATCHED'",
+      "Step 4: Verify species_key is used as join key"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Non-EXACT GBIF Taxonomy results in UNMATCHED status (species still valid via Wikipedia)",
+    "steps": [
+      "Step 1: Process species with valid Wikipedia + GBIF non-EXACT match",
+      "Step 2: Verify taxonomy fields are null/None",
+      "Step 3: Assert taxonomy_status = 'UNMATCHED'",
+      "Step 4: Verify species is still valid and added to Gold via Wikipedia"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "GBIF Occurrence aggregated 1:N -> 1:1 summary per species",
+    "steps": [
+      "Step 1: Process species with multiple GBIF occurrence records",
+      "Step 2: Verify merge output has single occurrence summary",
+      "Step 3: Assert n_valid_occurrences matches count of valid occurrences",
+      "Step 4: Verify countries contains unique country names ordered by frequency"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Occurrence summary includes n_valid_occurrences count",
+    "steps": [
+      "Step 1: Process species with 5 valid occurrences",
+      "Step 2: Verify n_valid_occurrences = 5",
+      "Step 3: Process species with 0 valid occurrences",
+      "Step 4: Verify n_valid_occurrences = 0 and augmentation empty"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Occurrence summary countries ordered by frequency descending",
+    "steps": [
+      "Step 1: Process species with occurrences from countries A, B, A, C, B, A",
+      "Step 2: Verify countries list has 'A' first (most frequent)",
+      "Step 3: Verify no duplicate country names in list",
+      "Step 4: Verify counts are consistent with raw occurrence data"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Occurrence summary year_min and year_max from occurrence date range",
+    "steps": [
+      "Step 1: Process species with occurrences dated 2010, 2015, 2020",
+      "Step 2: Verify year_min = 2010",
+      "Step 3: Verify year_max = 2020",
+      "Step 4: Process species with no dates and verify year_min/year_max are None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Occurrence summary iucn_red_list_category uses mode with deterministic tie-break",
+    "steps": [
+      "Step 1: Process species with IUCN categories: VU, VU, NT",
+      "Step 2: Verify iucn_red_list_category = 'VU'",
+      "Step 3: For tie, verify most recent event_date determines winner",
+      "Step 4: Process with no IUCN data and verify category is None"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Zero valid occurrences results in GBIF_AUGMENTATION_EMPTY (not an error)",
+    "steps": [
+      "Step 1: Process species with 0 valid occurrences",
+      "Step 2: Verify augmentation_status = 'GBIF_AUGMENTATION_EMPTY'",
+      "Step 3: Assert species is still valid via Wikipedia",
+      "Step 4: Verify occurrence summary has default empty values"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Merge output record contains all required fields",
+    "steps": [
+      "Step 1: Process a complete species through merge",
+      "Step 2: Verify output has species_key, wikipedia_title, extract, sections_text",
+      "Step 3: Verify output has kingdom, phylum, class_name, rank, taxonomy_status",
+      "Step 4: Verify output has n_valid_occurrences, countries, year_min, year_max, iucn_red_list_category, augmentation_status"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "Merge is business logic, not a physical data layer",
+    "steps": [
+      "Step 1: Inspect project structure",
+      "Step 2: Verify no physical merge Delta table exists",
+      "Step 3: Verify merge/merger.py is a Silver-to-Gold transformation",
+      "Step 4: Verify merger.py is retained and reused"
+    ],
+    "passes": false
+  },
+  {
+    "category": "merge",
+    "description": "merge/merger.py business logic is retained from v1",
+    "steps": [
+      "Step 1: Inspect merge/merger.py",
+      "Step 2: Verify merge_species function exists",
+      "Step 3: Verify GBIFOccurrenceSummary and MergedSpecies models exist",
+      "Step 4: Verify aggregation logic is preserved"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species Delta table exists in shark_knowledge.gold",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query catalog for shark_knowledge.gold.species",
+      "Step 3: Assert table exists",
+      "Step 4: Verify it is a Delta managed table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks Delta table exists in shark_knowledge.gold",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query catalog for shark_knowledge.gold.species_chunks",
+      "Step 3: Assert table exists",
+      "Step 4: Verify it is a Delta managed table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species logical primary key is species_key",
+    "steps": [
+      "Step 1: Inspect gold.species schema/docs",
+      "Step 2: Verify species_key is the documented logical PK",
+      "Step 3: Verify MERGE uses species_key as join key",
+      "Step 4: Verify exactly one current row per accepted species"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species identity fields are species_key, scientific_name, wikipedia_title, document_uri",
+    "steps": [
+      "Step 1: Inspect gold.species schema",
+      "Step 2: Verify species_key STRING NOT NULL",
+      "Step 3: Verify scientific_name, wikipedia_title, document_uri STRING NOT NULL",
+      "Step 4: Verify document_uri points to the Wikipedia page"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species has 12 canonical knowledge model section fields",
+    "steps": [
+      "Step 1: Inspect gold.species schema",
+      "Step 2: Verify identity, taxonomy, morphology, distribution, habitat, behavior",
+      "Step 3: Verify diet, reproduction, conservation, human_interaction, references, multimedia",
+      "Step 4: Verify all 12 are STRING NULL (optional)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species has document_text field (deterministic concatenation of non-null sections)",
+    "steps": [
+      "Step 1: Inspect gold.species schema",
+      "Step 2: Verify document_text STRING NOT NULL",
+      "Step 3: Verify document_text is concatenation of non-null canonical sections",
+      "Step 4: Verify concatenation is deterministic"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species structured metadata includes taxonomy and conservation/geography fields",
+    "steps": [
+      "Step 1: Inspect gold.species schema",
+      "Step 2: Verify kingdom, phylum, class_name, rank STRING NULL",
+      "Step 3: Verify taxonomy_status STRING NOT NULL",
+      "Step 4: Verify iucn_red_list_category, countries, year_min, year_max, n_valid_occurrences, augmentation_status"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species lifecycle fields are origin, first_processed_at, last_content_change_at, content_hash",
+    "steps": [
+      "Step 1: Inspect gold.species schema",
+      "Step 2: Verify origin STRING NOT NULL (SEED|AD_HOC)",
+      "Step 3: Verify first_processed_at, last_content_change_at TIMESTAMP NOT NULL",
+      "Step 4: Verify content_hash STRING NOT NULL"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species origin is SEED for seed species and AD_HOC for new species",
+    "steps": [
+      "Step 1: Process seed batch",
+      "Step 2: Query gold.species for a seed species and assert origin='SEED'",
+      "Step 3: Process a non-seed species",
+      "Step 4: Query gold.species and assert origin='AD_HOC'"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species uses MERGE on species_key",
+    "steps": [
+      "Step 1: Inspect storage/delta.py merge_species",
+      "Step 2: Verify MERGE INTO ... ON species_key",
+      "Step 3: Verify WHEN MATCHED and WHEN NOT MATCHED clauses",
+      "Step 4: Verify update condition uses content_hash"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species replaces species_catalog (no separate catalog table)",
+    "steps": [
+      "Step 1: Inspect project structure and schemas",
+      "Step 2: Verify no species_catalog table exists",
+      "Step 3: Verify known species catalog is obtained from gold.species",
+      "Step 4: Verify gold.species is the single accepted-species product"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks logical primary key is chunk_id",
+    "steps": [
+      "Step 1: Inspect gold.species_chunks schema/docs",
+      "Step 2: Verify chunk_id is the documented logical PK",
+      "Step 3: Verify MERGE uses chunk_id as join key",
+      "Step 4: Verify one semantic chunk per row"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks chunk identity fields are chunk_id, species_key, section, chunk_ordinal, text",
+    "steps": [
+      "Step 1: Inspect gold.species_chunks schema",
+      "Step 2: Verify chunk_id STRING NOT NULL",
+      "Step 3: Verify species_key, section STRING NOT NULL",
+      "Step 4: Verify chunk_ordinal INT NOT NULL and text STRING NOT NULL"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks parent identity fields are scientific_name, wikipedia_title, document_uri",
+    "steps": [
+      "Step 1: Inspect gold.species_chunks schema",
+      "Step 2: Verify scientific_name STRING NOT NULL",
+      "Step 3: Verify wikipedia_title STRING NOT NULL",
+      "Step 4: Verify document_uri STRING NOT NULL"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks denormalizes retrieval metadata into every chunk",
+    "steps": [
+      "Step 1: Inspect gold.species_chunks schema",
+      "Step 2: Verify kingdom, phylum, class_name, rank, taxonomy_status present",
+      "Step 3: Verify iucn_red_list_category, countries, year_min, year_max, n_valid_occurrences, augmentation_status present",
+      "Step 4: Verify metadata duplication is intentional (no runtime join needed)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks versioning fields are parent_content_hash, content_hash, last_content_change_at",
+    "steps": [
+      "Step 1: Inspect gold.species_chunks schema",
+      "Step 2: Verify parent_content_hash STRING NOT NULL",
+      "Step 3: Verify content_hash STRING NOT NULL",
+      "Step 4: Verify last_content_change_at TIMESTAMP NOT NULL"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "chunk_id format is {species_key}__{section}__{ordinal:03d}",
+    "steps": [
+      "Step 1: Chunk a species with a Habitat section",
+      "Step 2: Verify chunk_id == 'carcharodon_carcharias__Habitat__001'",
+      "Step 3: Verify ordinal is zero-padded to 3 digits",
+      "Step 4: Verify multiple chunks in a section increment ordinal"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "chunk_ordinal is an integer starting at 1 per section",
+    "steps": [
+      "Step 1: Chunk a species with multiple subchunks in one section",
+      "Step 2: Verify chunk_ordinal starts at 1",
+      "Step 3: Verify chunk_ordinal increments by 1",
+      "Step 4: Verify chunk_ordinal is stored as INT"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "MAX_CHUNK_BYTES is 24,000 measured as len(text.encode('utf-8'))",
+    "steps": [
+      "Step 1: Inspect chunker constant MAX_CHUNK_BYTES",
+      "Step 2: Assert MAX_CHUNK_BYTES == 24000",
+      "Step 3: Verify chunk size is measured in UTF-8 bytes",
+      "Step 4: Verify no chunk exceeds the bound"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Chunk splitting preserves deterministic ordering",
+    "steps": [
+      "Step 1: Chunk a long section twice",
+      "Step 2: Verify subchunk order is identical both times",
+      "Step 3: Verify chunk_ids are identical both times",
+      "Step 4: Verify no randomness in splitting"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Chunking is semantic section-first (not fixed-size pure)",
+    "steps": [
+      "Step 1: Process a species through chunking",
+      "Step 2: Verify chunks correspond to canonical section boundaries",
+      "Step 3: Verify no fixed-size splitting across sections",
+      "Step 4: Verify section context is preserved in each chunk"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "Multiple chunks per canonical section are allowed when a section is too large",
+    "steps": [
+      "Step 1: Chunk a species with a section larger than MAX_CHUNK_BYTES",
+      "Step 2: Verify the section produces N deterministic subchunks",
+      "Step 3: Verify each subchunk is under the size bound",
+      "Step 4: Verify subchunks preserve section identity"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "The 12 canonical sections are Identity, Taxonomy, Morphology, Distribution, Habitat, Behavior, Diet, Reproduction, Conservation, Human Interaction, References, Multimedia",
+    "steps": [
+      "Step 1: Inspect CANONICAL_SECTIONS constant",
+      "Step 2: Verify all 12 section names present",
+      "Step 3: Verify exact spelling and casing",
+      "Step 4: Verify chunker and models use the same list"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "document_text is a deterministic concatenation of non-null canonical sections",
+    "steps": [
+      "Step 1: Build a Species with some null sections",
+      "Step 2: Verify document_text includes only non-null sections",
+      "Step 3: Verify section order is canonical",
+      "Step 4: Verify same input produces same document_text"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "SpeciesMetadata is no longer persisted as a standalone entity",
+    "steps": [
+      "Step 1: Inspect project structure and schemas",
+      "Step 2: Verify no species_metadata table exists",
+      "Step 3: Verify metadata is denormalized into species_chunks",
+      "Step 4: Verify no separate SpeciesMetadata persistence code"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks is created with row tracking enabled (delta.enableRowTracking=true)",
+    "steps": [
+      "Step 1: Inspect species_chunks table creation",
+      "Step 2: Verify delta.enableRowTracking=true property",
+      "Step 3: Verify table property is set at creation",
+      "Step 4: Verify this supports future incremental change processing"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks has document_uri field for future AI Search source URI",
+    "steps": [
+      "Step 1: Inspect species_chunks schema",
+      "Step 2: Verify document_uri STRING NOT NULL",
+      "Step 3: Verify document_uri is the Wikipedia page URL",
+      "Step 4: Verify it is forward-compatible with AI Search"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks has text field as future embedding source column",
+    "steps": [
+      "Step 1: Inspect species_chunks schema",
+      "Step 2: Verify text STRING NOT NULL",
+      "Step 3: Verify text contains the chunk content",
+      "Step 4: Verify it is the planned embedding source column"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks has parent_content_hash and content_hash",
+    "steps": [
+      "Step 1: Inspect species_chunks schema",
+      "Step 2: Verify parent_content_hash STRING NOT NULL",
+      "Step 3: Verify content_hash STRING NOT NULL",
+      "Step 4: Verify both are SHA-256 hex"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species_chunks has last_content_change_at timestamp",
+    "steps": [
+      "Step 1: Inspect species_chunks schema",
+      "Step 2: Verify last_content_change_at TIMESTAMP NOT NULL",
+      "Step 3: Verify it is populated on write",
+      "Step 4: Verify it is excluded from content_hash"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species countries is ARRAY<STRING> NOT NULL",
+    "steps": [
+      "Step 1: Inspect gold.species schema",
+      "Step 2: Verify countries is ARRAY<STRING>",
+      "Step 3: Verify countries is NOT NULL (empty array allowed)",
+      "Step 4: Verify countries ordering is deterministic"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species n_valid_occurrences is BIGINT NOT NULL",
+    "steps": [
+      "Step 1: Inspect gold.species schema",
+      "Step 2: Verify n_valid_occurrences is BIGINT",
+      "Step 3: Verify n_valid_occurrences is NOT NULL",
+      "Step 4: Verify it matches the occurrence aggregation count"
+    ],
+    "passes": false
+  },
+  {
+    "category": "gold",
+    "description": "gold.species taxonomy_status is STRING NOT NULL",
+    "steps": [
+      "Step 1: Inspect gold.species schema",
+      "Step 2: Verify taxonomy_status STRING NOT NULL",
+      "Step 3: Verify values are MATCHED or UNMATCHED",
+      "Step 4: Verify it is populated for every species"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "storage/delta.py module exists and centralizes Delta persistence",
+    "steps": [
+      "Step 1: Verify storage/delta.py exists",
+      "Step 2: Verify it contains all append/merge functions",
+      "Step 3: Verify no persistence logic leaks into other modules",
+      "Step 4: Verify module remains simple (no repositories/ports/adapters)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "append_wikipedia_bronze function exists",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify append_wikipedia_bronze function",
+      "Step 3: Verify it appends to bronze.wikipedia_raw",
+      "Step 4: Verify append-only semantics"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "append_gbif_taxonomy_bronze function exists",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify append_gbif_taxonomy_bronze function",
+      "Step 3: Verify it appends to bronze.gbif_taxonomy_raw",
+      "Step 4: Verify append-only semantics"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "append_gbif_occurrence_bronze function exists",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify append_gbif_occurrence_bronze function",
+      "Step 3: Verify it appends to bronze.gbif_occurrence_raw",
+      "Step 4: Verify append-only semantics"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "merge_wikipedia_silver function exists",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify merge_wikipedia_silver function",
+      "Step 3: Verify MERGE on species_key",
+      "Step 4: Verify content_hash update condition"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "merge_gbif_taxonomy_silver function exists",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify merge_gbif_taxonomy_silver function",
+      "Step 3: Verify MERGE on species_key",
+      "Step 4: Verify content_hash update condition"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "merge_gbif_occurrences_silver function exists",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify merge_gbif_occurrences_silver function",
+      "Step 3: Verify MERGE on gbif_id",
+      "Step 4: Verify content_hash update condition"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "merge_rejected_records function exists",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify merge_rejected_records function",
+      "Step 3: Verify MERGE on rejection_id",
+      "Step 4: Verify deterministic rejection_id"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "merge_species function exists",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify merge_species function",
+      "Step 3: Verify MERGE on species_key",
+      "Step 4: Verify content_hash update condition"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "merge_species_chunks function exists",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify merge_species_chunks function",
+      "Step 3: Verify MERGE on chunk_id",
+      "Step 4: Verify content_hash update condition"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "content_hash no-op behavior: unchanged hash produces no update",
+    "steps": [
+      "Step 1: Write a record with content_hash H",
+      "Step 2: Re-write identical record with same H",
+      "Step 3: Verify no update occurred",
+      "Step 4: Verify row count and content unchanged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "Delta MERGE implements insert/update/no-op by natural key and content_hash",
+    "steps": [
+      "Step 1: Inspect MERGE logic",
+      "Step 2: Verify natural key missing -> INSERT",
+      "Step 3: Verify natural key exists + hash changed -> UPDATE",
+      "Step 4: Verify natural key exists + hash unchanged -> NO OP"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "Delta MERGE semantics are used for Silver and Gold tables",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify Silver tables use MERGE",
+      "Step 3: Verify Gold tables use MERGE",
+      "Step 4: Verify Bronze uses append (not MERGE)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "storage",
+    "description": "storage/delta.py avoids unnecessary abstraction layers",
+    "steps": [
+      "Step 1: Inspect storage/delta.py",
+      "Step 2: Verify no repository pattern",
+      "Step 3: Verify no ports/adapters/services",
+      "Step 4: Verify functions are simple and direct"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "Bronze is append-only and may produce new raw observations on rerun",
+    "steps": [
+      "Step 1: Run bronze ingestion for a batch",
+      "Step 2: Record bronze row count",
+      "Step 3: Re-run the same batch",
+      "Step 4: Verify bronze row count increased (allowed)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "Silver produces zero new logical records for identical source state",
+    "steps": [
+      "Step 1: Run pipeline for a batch",
+      "Step 2: Record silver row counts",
+      "Step 3: Re-run the same batch",
+      "Step 4: Verify silver logical row counts unchanged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "Silver produces zero unnecessary updates for identical source state",
+    "steps": [
+      "Step 1: Run pipeline for a batch",
+      "Step 2: Re-run the same batch",
+      "Step 3: Verify no content_hash changes in silver",
+      "Step 4: Verify no update operations occurred"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "Gold produces zero new Species for identical Silver state",
+    "steps": [
+      "Step 1: Run pipeline for a batch",
+      "Step 2: Record gold.species count",
+      "Step 3: Re-run the same batch",
+      "Step 4: Verify gold.species count unchanged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "Gold produces zero new SpeciesChunks for identical Silver state",
+    "steps": [
+      "Step 1: Run pipeline for a batch",
+      "Step 2: Record gold.species_chunks count",
+      "Step 3: Re-run the same batch",
+      "Step 4: Verify gold.species_chunks count unchanged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "Gold produces zero content_hash changes for identical Silver state",
+    "steps": [
+      "Step 1: Run pipeline for a batch",
+      "Step 2: Capture gold content_hash values",
+      "Step 3: Re-run the same batch",
+      "Step 4: Verify all gold content_hash values unchanged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "Repeated execution converges to the same logical Silver and Gold state",
+    "steps": [
+      "Step 1: Run pipeline for a batch",
+      "Step 2: Snapshot Silver and Gold logical state",
+      "Step 3: Re-run the same batch",
+      "Step 4: Verify Silver and Gold logical state identical"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "New idempotency definition: Bronze may append but Silver/Gold converge",
+    "steps": [
+      "Step 1: Run pipeline twice for the same batch",
+      "Step 2: Verify Bronze row count increased",
+      "Step 3: Verify Silver logical state converged",
+      "Step 4: Verify Gold logical state converged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "Idempotency is content-aware (driven by content_hash)",
+    "steps": [
+      "Step 1: Inspect MERGE update conditions",
+      "Step 2: Verify updates are gated on content_hash change",
+      "Step 3: Verify operational fields do not trigger updates",
+      "Step 4: Verify semantic change propagates downstream"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "natural key exists AND content_hash changed -> UPDATE",
+    "steps": [
+      "Step 1: Write a record",
+      "Step 2: Re-write with changed business field",
+      "Step 3: Verify UPDATE occurred",
+      "Step 4: Verify content_hash reflects new value"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "natural key exists AND content_hash unchanged -> NO OP",
+    "steps": [
+      "Step 1: Write a record",
+      "Step 2: Re-write identical record",
+      "Step 3: Verify no update occurred",
+      "Step 4: Verify row unchanged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "idempotency",
+    "description": "natural key does not exist -> INSERT",
+    "steps": [
+      "Step 1: Write a new record with a new natural key",
+      "Step 2: Verify INSERT occurred",
+      "Step 3: Verify row count increased by 1",
+      "Step 4: Verify content_hash populated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "unity_catalog",
+    "description": "Catalog shark_knowledge exists in Unity Catalog",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query SHOW CATALOGS",
+      "Step 3: Verify shark_knowledge present",
+      "Step 4: Verify catalog is usable"
+    ],
+    "passes": false
+  },
+  {
+    "category": "unity_catalog",
+    "description": "Schema shark_knowledge.bronze exists",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query SHOW SCHEMAS IN shark_knowledge",
+      "Step 3: Verify bronze present",
+      "Step 4: Verify schema is usable"
+    ],
+    "passes": false
+  },
+  {
+    "category": "unity_catalog",
+    "description": "Schema shark_knowledge.silver exists",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query SHOW SCHEMAS IN shark_knowledge",
+      "Step 3: Verify silver present",
+      "Step 4: Verify schema is usable"
+    ],
+    "passes": false
+  },
+  {
+    "category": "unity_catalog",
+    "description": "Schema shark_knowledge.gold exists",
+    "steps": [
+      "Step 1: Run setup notebook",
+      "Step 2: Query SHOW SCHEMAS IN shark_knowledge",
+      "Step 3: Verify gold present",
+      "Step 4: Verify schema is usable"
+    ],
+    "passes": false
+  },
+  {
+    "category": "unity_catalog",
+    "description": "All 9 tables are placed in the correct schema",
+    "steps": [
+      "Step 1: Query SHOW TABLES for each schema",
+      "Step 2: Verify 3 bronze tables in bronze schema",
+      "Step 3: Verify 4 silver tables in silver schema",
+      "Step 4: Verify 2 gold tables in gold schema"
+    ],
+    "passes": false
+  },
+  {
+    "category": "unity_catalog",
+    "description": "Bronze, Silver and Gold are persisted as governed Delta tables",
+    "steps": [
+      "Step 1: Inspect table types",
+      "Step 2: Verify all tables are Delta managed tables",
+      "Step 3: Verify tables are governed by Unity Catalog",
+      "Step 4: Verify no external/local persistence"
+    ],
+    "passes": false
+  },
+  {
+    "category": "unity_catalog",
+    "description": "Tables are managed (not external) Delta tables",
+    "steps": [
+      "Step 1: Inspect table creation SQL",
+      "Step 2: Verify no LOCATION clause pointing to external storage",
+      "Step 3: Verify tables are managed by the metastore",
+      "Step 4: Verify data lifecycle is governed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "unity_catalog",
+    "description": "Logical primary keys are documented, not physically enforced",
+    "steps": [
+      "Step 1: Inspect table schemas",
+      "Step 2: Verify no physical PRIMARY KEY constraints required",
+      "Step 3: Verify idempotency enforced by pipeline logic + MERGE",
+      "Step 4: Verify design does not depend on physical uniqueness"
+    ],
+    "passes": false
+  },
+  {
+    "category": "notebooks",
+    "description": "Notebooks are thin execution and demonstration surfaces",
+    "steps": [
+      "Step 1: Inspect notebooks",
+      "Step 2: Verify notebooks contain minimal logic",
+      "Step 3: Verify business logic lives in Python modules",
+      "Step 4: Verify notebooks only orchestrate and display"
+    ],
+    "passes": false
+  },
+  {
+    "category": "notebooks",
+    "description": "00_setup notebook exists and creates catalog/schemas/tables",
+    "steps": [
+      "Step 1: Verify 00_setup notebook exists",
+      "Step 2: Verify it installs dependencies",
+      "Step 3: Verify it creates catalog and schemas",
+      "Step 4: Verify it creates all 9 tables"
+    ],
+    "passes": false
+  },
+  {
+    "category": "notebooks",
+    "description": "01_run_pipeline notebook exists and runs the pipeline",
+    "steps": [
+      "Step 1: Verify 01_run_pipeline notebook exists",
+      "Step 2: Verify it imports run_pipeline from src.pipeline",
+      "Step 3: Verify it runs the seed batch",
+      "Step 4: Verify it displays the summary"
+    ],
+    "passes": false
+  },
+  {
+    "category": "notebooks",
+    "description": "02_verify_data notebook exists and verifies acceptance criteria",
+    "steps": [
+      "Step 1: Verify 02_verify_data notebook exists",
+      "Step 2: Verify it checks gold.species count == 18",
+      "Step 3: Verify it checks rerun convergence",
+      "Step 4: Verify it displays verification results"
+    ],
+    "passes": false
+  },
+  {
+    "category": "notebooks",
+    "description": "Business logic remains in Python modules (not notebooks)",
+    "steps": [
+      "Step 1: Inspect src/ modules",
+      "Step 2: Verify resolver, bronze, silver, merge, gold, storage modules exist",
+      "Step 3: Verify pipeline.py orchestrates",
+      "Step 4: Verify notebooks import from src"
+    ],
+    "passes": false
+  },
+  {
+    "category": "notebooks",
+    "description": "run_pipeline is importable from src.pipeline",
+    "steps": [
+      "Step 1: Import run_pipeline from src.pipeline",
+      "Step 2: Verify function accepts a list of scientific names",
+      "Step 3: Verify function accepts optional batch_id",
+      "Step 4: Verify function returns a summary dict"
+    ],
+    "passes": false
+  },
+  {
+    "category": "notebooks",
+    "description": "Notebook runs the seed batch end-to-end",
+    "steps": [
+      "Step 1: Run 01_run_pipeline notebook",
+      "Step 2: Verify Bronze tables populated",
+      "Step 3: Verify Silver tables populated",
+      "Step 4: Verify Gold tables populated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "notebooks",
+    "description": "Notebook runs an ad-hoc species",
+    "steps": [
+      "Step 1: Run pipeline with a non-seed scientific name",
+      "Step 2: Verify species processed through Bronze/Silver/Gold",
+      "Step 3: Verify origin='AD_HOC'",
+      "Step 4: Verify no master allow-list edited"
+    ],
+    "passes": false
+  },
+  {
+    "category": "notebooks",
+    "description": "Notebook demonstrates quarantine behavior",
+    "steps": [
+      "Step 1: Run pipeline with an invalid Wikipedia species",
+      "Step 2: Verify species not in gold.species",
+      "Step 3: Verify rejection in silver.rejected_records",
+      "Step 4: Verify rejection reason is inspectable"
+    ],
+    "passes": false
+  },
+  {
+    "category": "notebooks",
+    "description": "Notebooks use %pip to install pydantic and requests",
+    "steps": [
+      "Step 1: Inspect 00_setup notebook",
+      "Step 2: Verify %pip install pydantic",
+      "Step 3: Verify %pip install requests",
+      "Step 4: Verify no heavy local-only dependencies"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Running all 18 seed species produces populated Bronze Delta tables",
+    "steps": [
+      "Step 1: Run seed batch",
+      "Step 2: Query bronze.wikipedia_raw count > 0",
+      "Step 3: Query bronze.gbif_taxonomy_raw count > 0",
+      "Step 4: Query bronze.gbif_occurrence_raw count > 0"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Running all 18 seed species produces populated Silver Delta tables",
+    "steps": [
+      "Step 1: Run seed batch",
+      "Step 2: Query silver.wikipedia_pages count > 0",
+      "Step 3: Query silver.gbif_taxonomy count > 0",
+      "Step 4: Query silver.gbif_occurrences count > 0"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Running all 18 seed species produces exactly 18 accepted gold.species rows",
+    "steps": [
+      "Step 1: Run seed batch",
+      "Step 2: Query gold.species count",
+      "Step 3: Assert count == 18",
+      "Step 4: Verify all 18 species_keys present"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Running all 18 seed species produces one or more deterministic chunks per accepted species",
+    "steps": [
+      "Step 1: Run seed batch",
+      "Step 2: Query gold.species_chunks",
+      "Step 3: Verify each of 18 species has >= 1 chunk",
+      "Step 4: Verify chunk_ids are deterministic"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Rerunning the same seed set produces Gold new Species = 0",
+    "steps": [
+      "Step 1: Run seed batch",
+      "Step 2: Record gold.species count",
+      "Step 3: Re-run seed batch",
+      "Step 4: Verify gold.species count unchanged (0 new)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Rerunning the same seed set produces Gold new SpeciesChunks = 0",
+    "steps": [
+      "Step 1: Run seed batch",
+      "Step 2: Record gold.species_chunks count",
+      "Step 3: Re-run seed batch",
+      "Step 4: Verify gold.species_chunks count unchanged (0 new)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Rerunning the same seed set produces Gold content hash changes = 0",
+    "steps": [
+      "Step 1: Run seed batch",
+      "Step 2: Capture gold content_hash values",
+      "Step 3: Re-run seed batch",
+      "Step 4: Verify all content_hash values unchanged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Silver avoids logical duplicates on rerun",
+    "steps": [
+      "Step 1: Run seed batch",
+      "Step 2: Record silver row counts",
+      "Step 3: Re-run seed batch",
+      "Step 4: Verify silver logical row counts unchanged"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "A species outside the seed set can be requested using only its scientific name",
+    "steps": [
+      "Step 1: Run pipeline with a non-seed scientific name",
+      "Step 2: Verify species resolved and processed",
+      "Step 3: Verify it flows Bronze -> Silver -> Gold",
+      "Step 4: Verify no master allow-list edited"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Ad-hoc species origin is AD_HOC",
+    "steps": [
+      "Step 1: Run pipeline with a non-seed species",
+      "Step 2: Query gold.species for that species",
+      "Step 3: Assert origin == 'AD_HOC'",
+      "Step 4: Verify first_processed_at populated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "A species with invalid Wikipedia resolution does not enter Gold",
+    "steps": [
+      "Step 1: Run pipeline with an invalid Wikipedia species",
+      "Step 2: Query gold.species for that species_key",
+      "Step 3: Assert species not present",
+      "Step 4: Verify pipeline continues without failing"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Quarantine rejection is inspectable in silver.rejected_records",
+    "steps": [
+      "Step 1: Run pipeline with an invalid species",
+      "Step 2: Query silver.rejected_records",
+      "Step 3: Verify rejection row present with reason",
+      "Step 4: Verify rejection_detail and record_payload populated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Invalid or missing GBIF augmentation does not invalidate a valid Wikipedia species",
+    "steps": [
+      "Step 1: Process a species with valid Wikipedia but invalid GBIF",
+      "Step 2: Verify species still in gold.species",
+      "Step 3: Verify taxonomy_status='UNMATCHED' or augmentation_status='GBIF_AUGMENTATION_EMPTY'",
+      "Step 4: Verify status is explicit"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "GBIF tolerance status remains explicit",
+    "steps": [
+      "Step 1: Process species with missing GBIF augmentation",
+      "Step 2: Verify augmentation_status is explicit",
+      "Step 3: Verify taxonomy_status is explicit",
+      "Step 4: Verify no silent failure"
+    ],
+    "passes": false
+  },
+  {
+    "category": "data_ready",
+    "description": "Outbound internet connectivity to Wikipedia and GBIF is verified from the workspace",
+    "steps": [
+      "Step 1: Run a connectivity check in the notebook",
+      "Step 2: Verify Wikipedia API reachable",
+      "Step 3: Verify GBIF API reachable",
+      "Step 4: Document any Free Edition restrictions"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "DuckDB warehouse is retired in v2",
+    "steps": [
+      "Step 1: Inspect databricks-centric project",
+      "Step 2: Verify no duckdb dependency",
+      "Step 3: Verify no warehouse/loader.py",
+      "Step 4: Verify Delta tables replace DuckDB"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "FAISS IndexHNSWFlat is retired in v2",
+    "steps": [
+      "Step 1: Inspect databricks-centric project",
+      "Step 2: Verify no faiss dependency",
+      "Step 3: Verify no indexer.py FAISS behavior",
+      "Step 4: Verify AI Search is the future retrieval path"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "Local embedding model runtime is retired in v2",
+    "steps": [
+      "Step 1: Inspect databricks-centric project",
+      "Step 2: Verify no sentence-transformers dependency",
+      "Step 3: Verify no BAAI/bge-small-en-v1.5 runtime",
+      "Step 4: Verify embeddings deferred to AI Search"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "FAISS metadata.parquet is retired in v2",
+    "steps": [
+      "Step 1: Inspect databricks-centric project",
+      "Step 2: Verify no metadata.parquet persistence",
+      "Step 3: Verify chunk metadata lives in gold.species_chunks",
+      "Step 4: Verify no faiss_row_id mapping"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "Docker Compose deployment is retired in v2",
+    "steps": [
+      "Step 1: Inspect databricks-centric project",
+      "Step 2: Verify no docker-compose.yml",
+      "Step 3: Verify no Dockerfile",
+      "Step 4: Verify Databricks notebooks/jobs are the runtime"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "Separate Jupyter Lab service is retired in v2",
+    "steps": [
+      "Step 1: Inspect databricks-centric project",
+      "Step 2: Verify no jupyterlab service",
+      "Step 3: Verify Databricks notebooks replace Jupyter Lab",
+      "Step 4: Verify no local notebook server"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "File-based Silver valid/rejected persistence is retired in v2",
+    "steps": [
+      "Step 1: Inspect databricks-centric project",
+      "Step 2: Verify no data/silver JSON files",
+      "Step 3: Verify Silver uses Delta tables",
+      "Step 4: Verify rejected records use silver.rejected_records"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "Separate persisted SpeciesMetadata entity is retired in v2",
+    "steps": [
+      "Step 1: Inspect databricks-centric project",
+      "Step 2: Verify no SpeciesMetadata persistence",
+      "Step 3: Verify metadata denormalized into species_chunks",
+      "Step 4: Verify no standalone metadata table"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "Separate physical Merge data layer is retired in v2",
+    "steps": [
+      "Step 1: Inspect databricks-centric project",
+      "Step 2: Verify no physical merge table",
+      "Step 3: Verify merge is a Silver-to-Gold transformation",
+      "Step 4: Verify merger.py logic retained"
+    ],
+    "passes": false
+  },
+  {
+    "category": "migration",
+    "description": "Separate species_catalog table is retired in v2",
+    "steps": [
+      "Step 1: Inspect databricks-centric project",
+      "Step 2: Verify no species_catalog table",
+      "Step 3: Verify gold.species replaces it",
+      "Step 4: Verify known species obtained from gold.species"
+    ],
+    "passes": false
+  },
+  {
+    "category": "future_ai_search",
+    "description": "AI Search is deferred until Data Ready milestone",
+    "steps": [
+      "Step 1: Inspect project scope",
+      "Step 2: Verify no AI Search index creation in Data Ready",
+      "Step 3: Verify no managed embedding generation",
+      "Step 4: Verify no retrieval implementation yet"
+    ],
+    "passes": false
+  },
+  {
+    "category": "future_ai_search",
+    "description": "gold.species_chunks is the planned AI Search source table",
+    "steps": [
+      "Step 1: Inspect gold.species_chunks schema",
+      "Step 2: Verify it is the documented future source table",
+      "Step 3: Verify chunk_id is the planned primary key",
+      "Step 4: Verify text is the planned embedding source column"
+    ],
+    "passes": false
+  },
+  {
+    "category": "future_ai_search",
+    "description": "chunk_id is the planned AI Search primary key",
+    "steps": [
+      "Step 1: Inspect species_chunks schema",
+      "Step 2: Verify chunk_id is unique and deterministic",
+      "Step 3: Verify chunk_id is the documented PK",
+      "Step 4: Verify chunk_id is forward-compatible"
+    ],
+    "passes": false
+  },
+  {
+    "category": "future_ai_search",
+    "description": "text is the planned embedding source column",
+    "steps": [
+      "Step 1: Inspect species_chunks schema",
+      "Step 2: Verify text column present",
+      "Step 3: Verify text contains chunk content",
+      "Step 4: Verify text is the documented embedding source"
+    ],
+    "passes": false
+  },
+  {
+    "category": "future_ai_search",
+    "description": "document_uri is the planned source URI",
+    "steps": [
+      "Step 1: Inspect species_chunks schema",
+      "Step 2: Verify document_uri present",
+      "Step 3: Verify document_uri is the Wikipedia page URL",
+      "Step 4: Verify it is the documented source URI"
+    ],
+    "passes": false
+  },
+  {
+    "category": "future_ai_search",
+    "description": "Planned metadata filters include taxonomy, IUCN, countries, year range, augmentation status",
+    "steps": [
+      "Step 1: Inspect species_chunks schema",
+      "Step 2: Verify kingdom, phylum, class_name, rank present",
+      "Step 3: Verify taxonomy_status, iucn_red_list_category present",
+      "Step 4: Verify countries, year_min, year_max, augmentation_status present"
+    ],
+    "passes": false
+  },
+  {
+    "category": "future_ai_search",
+    "description": "Planned synchronization mode is Delta Sync (triggered)",
+    "steps": [
+      "Step 1: Inspect architecture docs",
+      "Step 2: Verify Delta Sync is the planned mode",
+      "Step 3: Verify Direct Vector Access not used (Free Edition)",
+      "Step 4: Verify batch-oriented synchronization fits"
+    ],
+    "passes": false
+  },
+  {
+    "category": "future_ai_search",
+    "description": "gold.species_chunks has row tracking enabled for future change feed",
+    "steps": [
+      "Step 1: Inspect species_chunks table properties",
+      "Step 2: Verify delta.enableRowTracking=true",
+      "Step 3: Verify this supports incremental change processing",
+      "Step 4: Verify no retrieval prerequisite for Data Ready"
+    ],
+    "passes": false
+  },
+  {
+    "category": "future_ai_search",
+    "description": "Gold remains the knowledge-base source of truth; AI Search is derived",
+    "steps": [
+      "Step 1: Inspect architecture docs",
+      "Step 2: Verify Gold != vector index",
+      "Step 3: Verify Gold Delta table -> synchronized search index",
+      "Step 4: Verify index rebuildable without losing knowledge base"
+    ],
+    "passes": false
+  },
+  {
+    "category": "future_ai_search",
+    "description": "Knowledge Assistant is deferred and does not constrain Data Ready",
+    "steps": [
+      "Step 1: Inspect project scope",
+      "Step 2: Verify no Knowledge Assistant implementation",
+      "Step 3: Verify forward-compatible fields only (document_uri, chunk_id, text, metadata)",
+      "Step 4: Verify Free Edition limitation documented"
+    ],
+    "passes": false
+  }
+]

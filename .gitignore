@@ -9,8 +9,17 @@ wheels/
 # Virtual environments
 .venv
 
+# La carpeta del apradigma
+.hee/
+
 # data
 data/
+
+# learning stuff
+notebooks/Learning/
+
+# El grafo del código
+graphify-out/
 
 # Lock file
 uv.lock
