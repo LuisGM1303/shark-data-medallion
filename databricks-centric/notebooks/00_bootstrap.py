@@ -16,30 +16,42 @@
 import sys
 
 
-def _workspace_src_path():
+def _workspace_src_root():
+    # Returns the workspace path of the folder that contains BOTH notebooks/ and
+    # src/ (the parent of the notebook's own directory). Example:
+    #   notebook path: /Users/me/databricks-centric/notebooks/00_bootstrap
+    #   -> /Workspace/Users/me/databricks-centric
     try:
         ctx = dbutils.notebook.entry_point.getDbutils().notebook().getContext()
         nb_path = ctx.notebookPath().get()
-        base = nb_path.rsplit("/notebooks/", 1)[0]
-        return f"/Workspace{base}/src"
+        nb_dir = nb_path.rsplit("/", 1)[0]
+        base = nb_dir.rsplit("/", 1)[0]
+        return f"/Workspace{base}"
     except Exception:
         return None
 
 
-SRC_PATH = _workspace_src_path()
-if SRC_PATH and SRC_PATH not in sys.path:
-    sys.path.insert(0, SRC_PATH)
+SRC_ROOT = _workspace_src_root()
+if SRC_ROOT and SRC_ROOT not in sys.path:
+    sys.path.insert(0, SRC_ROOT)
 
 # If auto-detection failed, uncomment and set your workspace path manually:
-# SRC_PATH = "/Workspace/Users/<your-email>/databricks-centric/src"
-# sys.path.insert(0, SRC_PATH)
+# SRC_ROOT = "/Workspace/Users/<your-email>/databricks-centric"
+# sys.path.insert(0, SRC_ROOT)
 
-print("SRC_PATH =", SRC_PATH)
+print("SRC_ROOT =", SRC_ROOT)
 
 # Databricks notebook source
-from src.pipeline import run_pipeline
-from src.storage import delta
-from src.config.seed_species import SEED_SPECIES, SEED_SCIENTIFIC_NAMES
+try:
+    from src.pipeline import run_pipeline
+    from src.storage import delta
+    from src.config.seed_species import SEED_SPECIES, SEED_SCIENTIFIC_NAMES
+except ImportError as e:
+    raise RuntimeError(
+        "Could not import the src/ modules. Make sure the src/ folder is uploaded "
+        "as workspace FILES (not notebooks) and sits next to notebooks/. "
+        f"SRC_ROOT={SRC_ROOT}. Original error: {e}"
+    )
 
 delta.set_spark(spark)
 delta.ensure_schema(spark)
