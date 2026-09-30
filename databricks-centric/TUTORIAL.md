@@ -231,3 +231,59 @@ avísame y lo cambio por una lista explícita de columnas en
 Si la creación de `gold.species_chunks` falla por la propiedad
 `delta.enableRowTracking`, quítala de la DDL en `src/storage/delta.py` (es
 opcional para Data Ready; solo prepara el futuro AI Search).
+
+---
+
+## 6. AI Search (Fase 6 — Retrieval)
+
+Una vez completado Data Ready, el siguiente paso es crear el índice de AI Search
+sobre `gold.species_chunks`. Nota: el menú puede decir **"Vector search index"**
+o **"AI Search index"** según la versión del workspace; son lo mismo.
+
+### 6.1 Crear el endpoint de AI Search
+
+1. Sidebar izquierda → **Compute**.
+2. Pestaña **AI Search** → **Create endpoint**.
+3. Nombre: `shark-knowledge-endpoint`.
+4. Tipo: **Standard** (Free Edition te da 1 endpoint y 1 search unit).
+5. **Create** y espera a que quede listo.
+
+### 6.2 Crear el índice Delta Sync
+
+1. Sidebar → **Catalog** (Catalog Explorer).
+2. Navega a `shark_knowledge` → `gold` → tabla **`species_chunks`**.
+3. Arriba a la derecha → **Create** → **Vector search index** (o *AI Search index*).
+4. En el diálogo configura:
+
+| Campo | Valor |
+| --- | --- |
+| Endpoint | `shark-knowledge-endpoint` |
+| Index name | `shark_knowledge.gold.species_chunks_index` |
+| Primary key | `chunk_id` |
+| Embedding source column | `text` |
+| Embedding model | el modelo de embeddings disponible (ej. `databricks-gte-large-en`) |
+| Sync mode | **Triggered** |
+
+5. En **Columns to sync**, selecciona las columnas de metadatos que quieras
+   poder filtrar: `chunk_id`, `species_key`, `section`, `chunk_ordinal`, `text`,
+   `scientific_name`, `wikipedia_title`, `document_uri`, `kingdom`, `phylum`,
+   `class_name`, `rank`, `taxonomy_status`, `iucn_red_list_category`,
+   `countries`, `year_min`, `year_max`, `n_valid_occurrences`,
+   `augmentation_status`.
+6. **Create**.
+
+### 6.3 Sincronizar y verificar
+
+1. Espera a que el índice pase a estado **ONLINE** (puede tardar unos minutos).
+2. Si usaste **Triggered**, dispara la sincronización manualmente (botón **Sync**).
+3. Verifica que el número de filas indexadas sea ~149 (los chunks de las 18
+   especies).
+
+### 6.4 Notas Free Edition
+
+- Solo tienes **1 endpoint** y **1 search unit**: reutiliza el mismo endpoint
+  para cualquier índice futuro.
+- El modelo de embeddings lo elige Databricks; usa el que aparezca disponible
+  en el dropdown (Free Edition suele ofrecer uno por defecto).
+- El índice queda gobernado por Unity Catalog (aparece como objeto en
+  `shark_knowledge.gold`).
